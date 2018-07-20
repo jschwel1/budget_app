@@ -21,4 +21,5 @@ app_name='budget'
 
 urlpatterns = [
     path(r'', views.home_page, name='home'),
+    path(r'base', views.load_base, name='base'),
 ]

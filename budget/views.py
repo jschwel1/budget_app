@@ -4,4 +4,7 @@ from django.shortcuts import render
 
 def home_page(request):
     context = {}
-    return render(request, 'budget/index.html', context);
+    return render(request, 'budget/index.html', context)
+
+def load_base(request):
+    return render(request, 'budget/base.html')

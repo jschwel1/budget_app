@@ -1,0 +1,17 @@
+<!Doctype html>
+<html>
+<head>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'budget/style/base.css' %}" />
+    <title>{%block title%}{%endblock%}</title>
+</head>
+<body>
+<ul class="topnav">
+    <li class="topnav"><a>Home</a></li>
+    <li class="topnav"><a>Configure</a></li>
+    <li class="topnav"><a>Data</a></li>
+</ul>
+<h4> Template </h4>
+{%block body%}{%endblock%}
+</body>
+</html>

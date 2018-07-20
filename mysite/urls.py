@@ -21,6 +21,6 @@ import budget
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    url(r'^/?$', lambda r:HttpResponseRedirect('/budget/')),
+    url(r'^$', lambda r:HttpResponseRedirect('/budget/')),
     url(r'budget/?', include('budget.urls', namespace='budget')),
 ]
