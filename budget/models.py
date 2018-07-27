@@ -36,7 +36,7 @@ class Budget(models.Model):
     def __str__(self):
         return start + '->' + end;
 
-class BudgetCategories():
+class BudgetCategory():
     budget = models.ForeignKey(Budget, on_delete=models.CASCADE);
     category = models.ForeignKey(Category, on_delete=models.CASCADE);
     amount = models.IntegerField();

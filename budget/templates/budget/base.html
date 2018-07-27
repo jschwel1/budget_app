@@ -7,9 +7,9 @@
 </head>
 <body>
 <ul class="topnav">
-    <li class="topnav"><a>Home</a></li>
-    <li class="topnav"><a>Configure</a></li>
-    <li class="topnav"><a>Data</a></li>
+    <li class="topnav"><a href="{% url 'budget:home' %}">Home</a></li>
+    <li class="topnav"><a href="{% url 'budget:config' %}">Configure</a></li>
+    <li class="topnav"><a href="{% url 'budget:overview' %}">Data</a></li>
 </ul>
 <h4> Template </h4>
 {%block body%}{%endblock%}
