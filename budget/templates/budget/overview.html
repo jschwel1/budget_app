@@ -1,6 +1,56 @@
 {% extends 'budget/base.html' %}
 
 {% block body %}
-<h2> Welcome to the Overview page</h2>
-
+<h2> Welcome to stronge Overview page</h2>
+<div class='row'>
+    <div class='col-md-3'>
+        {{tx_form.as_p}}
+    </div>
+    <div class='col-md-9'>
+        <div class='row'>
+            <div class='col'>
+                <div class='col-md-1'>
+                    <strong>Date</strong>
+                </div>
+                <div class='col-md-1'>
+                    <strong>Amount</strong>
+                </div>
+                <div class='col-md-1'>
+                    <strong>Category</strong>
+                </div>
+                <div class='col-md-1'>
+                    <strong>Location</strong>
+                </div>
+                <div class='col-md-1'>
+                    <strong>Notes</strong>
+                </div>
+                <div class='col-md-1'>
+                    <strong>Card/Bank Used</strong>
+                </div>
+            </div>
+        </div>
+        {% for tx in all_transactions %}
+        <div class='row entry'>
+            <div class='col-md-1'>
+                {{tx.date}}
+            </div>
+            <div class='col-md-1'>
+                ${{tx.amount}}
+            </div>
+            <div class='col-md-1'>
+                {{tx.category}}
+            </div>
+            <div class='col-md-1'>
+                {{tx.location}}
+            </div>
+            <div class='col-md-1'>
+                {{tx.notes}}
+            </div>
+            <div class='col-md-1'>
+                {{tx.card_used}}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
 {% endblock %}

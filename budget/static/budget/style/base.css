@@ -36,3 +36,6 @@ li.topnav a:hover:not(.active) {
 h4{
     font-color:blue;
 }
+div.body_contents{
+    margin: 1em;
+}

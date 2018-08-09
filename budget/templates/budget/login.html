@@ -1,0 +1,39 @@
+{% extends 'budget/base.html' %}
+
+{% block body %}
+<h2> Login Page </h2>
+<form method='POST' action="{% url 'budget:login' %}">
+    {% csrf_token %}
+    {% if error_msg  %}
+    <div class='alert alert-danger'>
+        Error: "{{error_msg}}"
+    </div>
+    {% endif %}
+    <div class='row'>
+        <div class='col-md-2'>
+            <label> Username: </label>
+        </div>
+        <div class='col-md-2'>
+            <input type='text' name='username' {% ifnotequal username '' %} {{username}} {% endifnotequal %} required />
+        </div>
+    </div>
+    <div class='row'>
+        <div class='col-md-2'>
+            <label> Password: </label>
+        </div>
+        <div class='col-md-2'>
+            <input type='password' name='password' required />
+        </div>
+    </div>
+    <div class='row'>
+		<div class='col-md-2'></div>
+        <div class='col-md-1'>
+            <input type='submit' name='login' value='login' style='width:100%'>
+        </div>
+        <div class='col-md-1'>
+            <input type='submit' name='register' value='register' style='width:100%'>
+        </div>
+    </div>
+</form>
+{% endblock %}
+

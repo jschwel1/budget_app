@@ -1,17 +1,31 @@
 <!Doctype html>
 <html>
 <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'budget/style/base.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'budget/style/bootstrap.min.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'budget/style/bootstrap-theme.min.css' %}" />
+    <script src="{% static 'budget/script/bootstrap.min.js' %}"></script>
     <title>{%block title%}{%endblock%}</title>
 </head>
 <body>
 <ul class="topnav">
     <li class="topnav"><a href="{% url 'budget:home' %}">Home</a></li>
     <li class="topnav"><a href="{% url 'budget:config' %}">Configure</a></li>
-    <li class="topnav"><a href="{% url 'budget:overview' %}">Data</a></li>
+    <li class="topnav"><a href="{% url 'budget:overview' %}">Overview</a></li>
+    {% if user.is_authenticated %}
+    <li class="topnav"><a href="{% url 'budget:logout' %}">Logout</a></li>
+    <li class="topnav" style='float:right'><a>{{user.username}}</a></li>
+    {% else %}
+    <li class="topnav"><a href="{% url 'budget:login' %}">Login</a></li>
+    {% endif %}
 </ul>
 <h4> Template </h4>
+<div class='body_contents'>
 {%block body%}{%endblock%}
+</div>
 </body>
 </html>

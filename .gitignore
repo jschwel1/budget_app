@@ -3,3 +3,4 @@ migrations
 *.pyc
 *.pyo
 mysite/staticfiles
+db.sqlite3
