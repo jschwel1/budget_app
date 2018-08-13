@@ -30,7 +30,7 @@ class Transaction(models.Model):
     amount = models.IntegerField()
     # Location can be a place or the name of a bank in the case of balance payments
     location = models.CharField(max_length=64)
-    notes = models.CharField(max_length=64)
+    notes = models.CharField(max_length=64, default='')
     category = models.ForeignKey(Category, on_delete=models.DO_NOTHING)
     card_used = models.ForeignKey(Bank, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
