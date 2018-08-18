@@ -18,6 +18,7 @@ class Category(models.Model):
     class Meta:
         verbose_name_plural = "Categories"
     category = models.CharField(max_length=65)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, default=User.objects.all()[0].id)
     
     def __str__(self):
         return self.category;
@@ -35,6 +36,12 @@ class Transaction(models.Model):
     card_used = models.ForeignKey(Bank, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    def get_pk(self):
+        try:
+            return self.id
+        except:
+            return 'N/A'
+
     def __str__(self):
         return str(self.user)+': '+\
                str(self.date.day)+'/'+str(self.date.month)+'/'+str(self.date.year)+' '+\
@@ -42,14 +49,21 @@ class Transaction(models.Model):
                str(self.category)+' '+\
                str(self.location)+' '+\
                str(self.notes)+' '+\
-               str(self.card_used)
+               str(self.card_used) +\
+               ' ('+str(self.get_pk())+')'
+
+    def get_value(self, v):
+        return self.__dict__[v]
+    def set_value(self, a, v):
+        self.__dict__[a] = v
     
 class Budget(models.Model):
     class Meta:
         verbose_name_plural = "Budgets"
 
-    start=models.DateField(default=timezone.now)
-    end=models.DateField(default=timezone.now)
+    start = models.DateField(default=timezone.now)
+    end = models.DateField(default=timezone.now)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, default=User.objects.all()[0].id)
 
     def __str__(self):
         return self.start + '->' + self.end;

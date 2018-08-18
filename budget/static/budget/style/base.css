@@ -39,3 +39,19 @@ h4{
 div.body_contents{
     margin: 1em;
 }
+
+table.transactions, th.transactions, td.transactions{
+    border: 1px solid black;
+    padding:1em;
+    margin:1em;
+}
+tr.transactions:nth-child(even){
+    background-color: #CCC;
+}
+tr.transactions:nth-child(odd){
+    background-color: #FFF;
+}
+tr.transactions:hover{
+    /*background-color:#4832e8;*/
+    text-decoration: underline;
+}

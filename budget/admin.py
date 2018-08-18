@@ -8,7 +8,7 @@ class BankAdmin(admin.ModelAdmin):
 admin.site.register(Bank, BankAdmin);
 
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ['category']
+    list_display = ['category', 'user']
 admin.site.register(Category, CategoryAdmin);
 
 class TransactionAdmin(admin.ModelAdmin):
@@ -16,7 +16,7 @@ class TransactionAdmin(admin.ModelAdmin):
 admin.site.register(Transaction, TransactionAdmin)
 
 class BudgetAdmin(admin.ModelAdmin):
-    list_display=['start', 'end']
+    list_display=['user', 'start', 'end']
 admin.site.register(Budget, BudgetAdmin)
 
 class BudgetCategoryAdmin(admin.ModelAdmin):
