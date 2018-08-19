@@ -28,7 +28,7 @@ class Transaction(models.Model):
         verbose_name_plural = "Transactions"
 
     date = models.DateField(default=django.utils.timezone.now)
-    amount = models.IntegerField()
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
     # Location can be a place or the name of a bank in the case of balance payments
     location = models.CharField(max_length=64)
     notes = models.CharField(max_length=64, default='')

@@ -1,7 +1,7 @@
 {% extends 'budget/base.html' %}
 
 {% block body %}
-<h2> Welcome to stronge Overview page</h2>
+<h2> Welcome to Overview page</h2>
 <div class='row'>
     <div style='margin: 1em;'>
         <form action="{% url 'budget:overview' %}" method='POST' id='transaction_form'>
@@ -93,7 +93,7 @@
         <td class='transactions' colspan='7'>
             Starting values
         </td>
-        <td class='transactions'>
+        <td class='transactions' id='net_start'>
             $0.00
         </td>
         {% for bank in all_banks %}
@@ -144,10 +144,10 @@
         amount_text = document.getElementById("amount_row_"+id_num).innerText
         amount=0
         if (amount_text.match(/\(\d+\)/)){
-            amount = -1*parseInt(amount_text.match(/\((\d+)\)/)[1],10)
+            amount = -1*parseFloat(amount_text.match(/\((\d+)\)/)[1],10)
         }
         else {
-            amount = parseInt(amount_text.match(/(\d+)/)[1], 10)
+            amount = parseFloat(amount_text.match(/(\d+)/)[1], 10)
         }
         
         category = document.getElementById("category_row_"+id_num).innerText
@@ -185,7 +185,37 @@
         
     }
     // Calculate net change
-    
+    calculate_net_vals = function(){
+        start = document.getElementById('net_start');
+        num_rows = start.parentElement.parentElement.childElementCount
+        val = 0
+        for (i = num_rows-2; i > 0; i--){
+            // If notes say "balance" don't adjust
+            notes = document.getElementById('notes_row_'+i).innerText
+            category = document.getElementById('category_row_'+i).innerText
+            amount = document.getElementById('amount_row_'+i).innerText
+            console.log('amount: ' + amount)
+            if (amount.match(/\(\d+\.\d\d\)/) !== null){
+                amount = -1*parseFloat(amount.match(/\((\d+\.\d\d)\)/)[1])
+                console.log('n: '+amount)
+            }
+            else {
+                amount = parseFloat(amount.match(/(\d+\.\d\d)/)[1])
+                console.log('p: ' + amount)
+            }
+            
+            if (notes.toLowerCase() !== 'balance'){
+                if (category.toLowerCase() === 'income')
+                    val = val+amount
+                else
+                    val = val-amount
+            }
+            val = val.toFixed(2)
+            if (val < 0) val_text = '$('+-1*val+')'
+            else val_text = '$'+val
+            document.getElementById('net_row_'+i).innerText = val_text
+        }
+    }
     // Calculate the bank value rows
     calculate_bank_vals = function(){
         var banks = []
@@ -199,13 +229,13 @@
             start = document.getElementById(bank+'_start')
             rows = start.parentElement.parentElement.childElementCount
             console.log(start)
-            value = parseInt(start.innerText.substring(1), 10)
+            value = parseFloat(start.innerText.substring(1))
             console.log(bank + "starts at $" + value)
             
             // rows = row with starting values, row=0 is the table header row
             
             for (i = rows-2; i>0; i--){
-                value = parseInt(document.getElementById("amount_row_"+i).innerText.substring(1))
+                value = parseFloat(document.getElementById("amount_row_"+i).innerText.substring(1))
                 category = document.getElementById("category_row_"+i).innerText
                 location = document.getElementById("category_row_"+i).innerText
                 card_used = document.getElementById("card_used_row_"+i).innerText
@@ -215,5 +245,7 @@
             }
         })
     }
+    
+    calculate_net_vals()
 </script>
 {% endblock %}
