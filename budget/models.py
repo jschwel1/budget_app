@@ -8,8 +8,9 @@ import datetime, django
 class Bank(models.Model):
     class Meta:
         verbose_name_plural = "Banks"
-    starting_amount = models.IntegerField()
+    starting_amount = models.DecimalField(max_digits=15, decimal_places=2)
     name = models.CharField(max_length=64)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, default=User.objects.all()[0].id)
 
     def __str__(self):
         return self.name

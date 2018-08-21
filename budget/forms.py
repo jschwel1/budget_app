@@ -1,5 +1,6 @@
 from django import forms
 from .models import Bank, Category, Transaction, Budget, BudgetCategory
+import datetime
 
 class BankForm(forms.ModelForm):
     class Meta:
@@ -33,9 +34,11 @@ class TransactionForm(forms.ModelForm):
         print('categories: ', categories)
         self.fields['category'].widget.choices=categories
         print('added categories widget')
-        self.fields['date'].widget=forms.SelectDateWidget(empty_label=None)
+        self.fields['date'].widget=forms.SelectDateWidget(empty_label=None,
+                                        years=range(1950,datetime.date.today().year+2))
         self.fields['location'].label='Location/To (for transfers)'
         self.fields['location'].widget.attrs={'autocomplete':'off', 'list':'Locations'}
+        
         print('Done')
 
 class BudgetForm(forms.ModelForm):

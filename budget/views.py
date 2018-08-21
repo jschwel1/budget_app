@@ -17,29 +17,48 @@ def login_page(request):
     context = {}
     if request.method == 'POST':
         username=request.POST.get('username','')
+        context['username'] = username
         password=request.POST.get('password','')
         error_msg=''
           
         # Register
         if request.POST.get('register','') != '':
             try:
-                User.create(username=username,password=password)
+                context['register'] = True
+                firstname = request.POST.get('firstname','')
+                context['firstname'] = firstname
+                lastname = request.POST.get('lastname','')
+                context['lastname'] = lastname
+                email = request.POST.get('email','')
+                context['email'] = email
+                user = User.objects.create_user(username,
+                                                email,
+                                                password)
+                print("user: ", user)
+                user.last_name = lastname
+                user.first_name = firstname
+                user.save()
                 login(request,user)
+                # Create Income and Transfer categories
+                Category.objects.create(category='Transfer',user=user)
+                Category.objects.create(category='Income',user=user)
                 return redirect('budget:home')
             except:
                 error_msg='username already taken'
+                context['error_msg'] = error_msg
         # login
         else:
             user=authenticate(username=username, password=password)
             if user == None:
                 error_msg='invalid username or password'
+                context['login'] = True
             else:
                 login(request,user)
                 return redirect('budget:home')
-        context = {
-            'username': username,
-            'error_msg':error_msg,
-        }
+        context['username'] = username
+        context['error_msg'] = error_msg
+    else:
+        context['login'] = True
     return render(request, 'budget/login.html', context)
 
 @login_required
@@ -55,6 +74,9 @@ def load_base(request):
 @login_required
 def config_page(request):
     context = {}
+    user = get_user(request)
+    # Get all configurable data
+    
     return render(request, 'budget/config.html', context)
 
 @login_required
@@ -129,7 +151,7 @@ def overview_page(request):
 
         locations.append(tx.location)
     
-    all_banks = Bank.objects.all()
+    all_banks = Bank.objects.filter(user=user)
     for bank in all_banks:
         locations.append(str(bank.name))
     locations = sorted(list(set(locations)))
