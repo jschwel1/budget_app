@@ -36,7 +36,7 @@
     </div>
     
     <table id='transactions_table' class='transactions'>
-        <tr>
+        <tr class='header' id='transaction_header'>
             <th class='transactions'>
                 #
             </th>
@@ -231,16 +231,11 @@
     
     function moveToForm(id_num){
         // If this row is clicked, add its data to the form
-        console.log("date_row_"+id_num)
         date = document.getElementById("date_row_"+id_num).innerText
         date = date.match(/(\w+) (\d+), (\d+)/)
-        console.log(date)
         date_month = month_dict[date[1]]
         date_day = date[2]
         date_year = date[3]
-        console.log(date_month)
-        console.log(date_day)
-        console.log(date_year)
         amount_text = document.getElementById("amount_row_"+id_num).innerText
         amount=0
         if (amount_text.match(/\(\d+\)/)){
@@ -254,7 +249,6 @@
         loc = document.getElementById("location_row_"+id_num).innerText
         notes = document.getElementById("notes_row_"+id_num).innerText
         card_used = document.getElementById("card_used_row_"+id_num).innerText
-        console.log('Finished gathering data')
         // Add values to the form
         document.getElementById('id_date_month').value = date_month
         document.getElementById('id_date_day').value = date_day
@@ -265,7 +259,6 @@
         document.getElementById('id_notes').value = notes
         document.getElementById('id_card_used').value = bank_lookup[card_used]
         document.getElementById('database_pk').value = document.getElementById("row_"+id_num).getAttribute("name")
-        console.log("DONE")
     }
     
     text_to_float = function(amount_str=''){
@@ -284,7 +277,6 @@
         num_rows = start.parentElement.parentElement.childElementCount
         val = 0
         for (i = num_rows-2; i > 0; i--){
-            console.log('==============')
             // If notes say "balance" don't adjust
             notes = document.getElementById('notes_row_'+i).innerText
             category = document.getElementById('category_row_'+i).innerText
@@ -297,7 +289,6 @@
                 else
                     val = val-amount
             }
-            console.log(typeof(val),val)
             if (val < 0) val_text = '$('+-1*val.toFixed(2)+')'
             else val_text = '$'+val.toFixed(2)
             document.getElementById('net_row_'+i).innerText = val_text
@@ -314,19 +305,14 @@
             // get the starting value
             start = document.getElementById(bank+'_start');
             num_rows = start.parentElement.parentElement.childElementCount;
-            console.log(start,start.innerText)
             val = text_to_float(start.innerText);
-            console.log(val)
             for (i = num_rows-2; i > 0; i--){
-                console.log('--------')
                 notes = document.getElementById('notes_row_'+i).innerText;
                 category = document.getElementById('category_row_'+i).innerText;
                 amount = document.getElementById('amount_row_'+i).innerText;
                 card_used = document.getElementById('card_used_row_'+i).innerText;
                 amount = text_to_float(amount);
                 // Use value to update this bank's current amount
-                console.log(typeof(val),val)
-                console.log(typeof(amount),amount)
                 if (category.toLowerCase() == 'income'){
                     if (card_used === bank){
                         val = val+amount;
@@ -343,7 +329,6 @@
                         val = val+amount;
                     }
                 }
-                console.log(typeof(val),val)
                 
                 if (val < 0) val_text = '$('+-1*val.toFixed(2)+')'
                 else val_text = '$'+val.toFixed(2)
@@ -353,11 +338,14 @@
         })
     }
     
-    calculate_net_vals()
-    calculate_bank_vals()
+    // CALCULATE VALUES
+    $(document).ready(function(){
+        calculate_net_vals()
+        calculate_bank_vals()
+    });
 </script>
-<!-- Tab script -->
 <script>
+// Tab script
 function openTab(evt, tabName) {
     var i, tabcontent, tablinks;
     tabcontent = document.getElementsByClassName("tabcontent");

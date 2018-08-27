@@ -1,7 +1,7 @@
 body {
 	margin:0;
 }
-
+/*
 ul.topnav {
     list-style-type: none;
     margin: 0;
@@ -28,11 +28,10 @@ li.topnav a {
 li.topnav a:hover:not(.active) {
     background-color: #111;
 }
-
+*/
 .active {
     background-color: #4CAF50;
 }
-
 h4{
     font-color:blue;
 }
@@ -86,3 +85,14 @@ tr.transactions:hover{
     border: 1px solid #ccc;
     border-top: none;
 }
+/*
+.sticky {
+  position: fixed;
+  top: 0;
+  width: 100%;
+}
+
+.sticky + .content {
+  padding-top: 102px;
+}
+*/

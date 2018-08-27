@@ -13,6 +13,24 @@
     <title>{%block title%}{%endblock%}</title>
 </head>
 <body>
+    <div class="container" style="width: 100%">
+        
+    </div>
+    <nav class="navbar navbar-inverse">
+        <ul class="nav navbar-nav">
+            <li role="presentation"><a href="{% url 'budget:home' %}">Home</a></li>
+            <li role="presentation"><a href="{% url 'budget:config' %}">Config</a></li>
+            <li role="presentation"><a href="{% url 'budget:overview' %}">Overview</a></li>
+            {% if user.is_authenticated %}
+            <li role="presentation"><a href="{% url 'budget:logout' %}">Logout</a></li>
+            <li role="presentation" class="disabled"><a>{{user.username}}</a></li>
+            {% else %}
+            <li role="presentation"><a href="{% url 'budget:login' %}">Login</a></li>
+            {% endif %}
+        </ul>
+        
+    </nav>
+<!--
 <ul class="topnav">
     <li class="topnav"><a href="{% url 'budget:home' %}">Home</a></li>
     <li class="topnav"><a href="{% url 'budget:config' %}">Configure</a></li>
@@ -24,7 +42,7 @@
     <li class="topnav"><a href="{% url 'budget:login' %}">Login</a></li>
     {% endif %}
 </ul>
-<h4> Template </h4>
+-->
 <div class='body_contents'>
 {%block body%}{%endblock%}
 </div>
