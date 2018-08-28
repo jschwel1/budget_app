@@ -35,7 +35,6 @@ def login_page(request):
                 user = User.objects.create_user(username,
                                                 email,
                                                 password)
-                print("user: ", user)
                 user.last_name = lastname
                 user.first_name = firstname
                 user.save()
@@ -91,16 +90,14 @@ def overview_page(request):
             # New Entry
             if request.POST.get('submit_new','') != '':
                 try:
-                    print('just started')
                     transaction = tx_form.save(commit=False)
-                    print('saved')
                     category = Category.objects.filter(user__exact=get_user(request)).get(category__exact=transaction.category)
                     transaction.category = category
                     transaction.user=user
-                    print(transaction)
                     transaction.save()
                 except BaseException as e:
                     print(str(type(e)),': ', e)
+                    traceback.print_exc()
             elif request.POST.get('update','') != '':
                 pk = request.POST.get('pk','')
                 try:
@@ -189,7 +186,7 @@ def get_overview_data(request):
         cur_tx['card_used'] = str(tx.card_used)
         cur_tx['category'] = str(tx.category)
         cur_tx['date'] = str(tx.date.strftime('%B %d, %Y'))
-        # category == transfer -> check from and to, don't update net
+        # category == transfer -> check from and to, don't update net (to should be a bank)
         if cur_tx['category'].lower() == 'transfer':
             loc = tx.location # to
             card_used = tx.card_used.name # from
@@ -200,15 +197,22 @@ def get_overview_data(request):
                 cur_tx[card_used] -= tx.amount
                 net_and_bank[card_used] = cur_tx[card_used]
             except BaseException as e:
+                print('loc:', loc)
+                print('cur_tx:', cur_tx)
                 print(type(e), e)
+                traceback.print_exc()
         # category == income -> check bank to
         elif cur_tx['category'].lower() == 'income':
             to = tx.card_used.name
             try:
                 cur_tx[to] += tx.amount
                 net_and_bank[to] = cur_tx[to]
+                cur_tx['net'] += float(tx.amount)
+                cur_tx['net'] = round(cur_tx['net'],2)
+                net_and_bank['net'] = cur_tx['net']
             except BaseException as e:
                 print(type(e), e)
+                traceback.print_exc()
                 
         # category == anything else -> check bank from
         else:
@@ -216,8 +220,12 @@ def get_overview_data(request):
             try:
                 cur_tx[card_used] -= tx.amount
                 net_and_bank[card_used] = cur_tx[card_used]
+                cur_tx['net'] -= float(tx.amount)
+                cur_tx['net'] = round(cur_tx['net'],2)
+                net_and_bank['net'] = cur_tx['net']
             except BaseException as e:
                 print(type(e), e)
+                traceback.print_exc()
             
         if tx.amount < 0:
             cur_tx['amount'] = '$('+str(-1*cur_tx['amount'])+')'
