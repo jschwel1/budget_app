@@ -25,5 +25,6 @@ urlpatterns = [
     re_path(r'^overview/$', views.overview_page, name='overview'),
     re_path(r'^login/$', views.login_page, name='login'),
     re_path(r'^logout/$', views.logout_page, name='logout'),
+    re_path(r'^get_overview_data/$', views.get_overview_data, name='get_overview_data'),
     path(r'base', views.load_base, name='base'),
 ]

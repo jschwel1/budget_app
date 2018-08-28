@@ -2,9 +2,10 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout, get_user
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from .models import Bank, Category, Transaction, Budget, BudgetCategory
 from .forms import TransactionForm
-import traceback
+import traceback, json
 
 # Create your views here.
 
@@ -140,15 +141,12 @@ def overview_page(request):
                     tx_form = TransactionForm(user=user)
     else:
         tx_form = TransactionForm(user=user)
+    
+    
     all_transactions = Transaction.objects.filter(user__exact=user).order_by('-date')
     # Update transaction amounts to strings with parens for negatives
     locations = []
     for tx in all_transactions:
-        if tx.amount < 0:
-            tx.amount = '('+str(-1*tx.amount)+')'
-        else:
-            tx.amount = str(tx.amount)
-
         locations.append(tx.location)
     
     all_banks = Bank.objects.filter(user=user)
@@ -156,13 +154,79 @@ def overview_page(request):
         locations.append(str(bank.name))
     locations = sorted(list(set(locations)))
     all_categories = Category.objects.filter(user__exact=user)
+    
     context = {
-        'all_transactions': all_transactions,
         'tx_form': tx_form,
         'all_banks': all_banks,
         'locations': locations,
         'all_categories': all_categories,
-        'pk': pk,
     }
     return render(request, 'budget/overview.html', context)
 
+
+@login_required
+def get_overview_data(request):
+    user = get_user(request)
+    
+    all_transactions = Transaction.objects.filter(user__exact=user).order_by('date') # reversed, but will be flipped after calculations
+    all_banks = Bank.objects.filter(user=user)
+    all_categories = Category.objects.filter(user__exact=user)
+    
+    # Get net and bank values
+    net_and_bank = {'net': 0.0}
+    bank_lookup = {}
+    for bank in all_banks:
+        net_and_bank[bank.name] = bank.starting_amount
+    
+        
+    tx_list = []
+    for tx in all_transactions:
+        cur_tx = vars(tx)
+        # Add all the banks
+        cur_tx['net'] = net_and_bank['net']
+        for bank in all_banks:
+            cur_tx[bank.name] = net_and_bank[bank.name]
+        cur_tx['card_used'] = str(tx.card_used)
+        cur_tx['category'] = str(tx.category)
+        cur_tx['date'] = str(tx.date.strftime('%B %d, %Y'))
+        # category == transfer -> check from and to, don't update net
+        if cur_tx['category'].lower() == 'transfer':
+            loc = tx.location # to
+            card_used = tx.card_used.name # from
+            
+            try:
+                cur_tx[loc] += tx.amount
+                net_and_bank[loc] = cur_tx[loc]
+                cur_tx[card_used] -= tx.amount
+                net_and_bank[card_used] = cur_tx[card_used]
+            except BaseException as e:
+                print(type(e), e)
+        # category == income -> check bank to
+        elif cur_tx['category'].lower() == 'income':
+            to = tx.card_used.name
+            try:
+                cur_tx[to] += tx.amount
+                net_and_bank[to] = cur_tx[to]
+            except BaseException as e:
+                print(type(e), e)
+                
+        # category == anything else -> check bank from
+        else:
+            card_used = tx.card_used.name
+            try:
+                cur_tx[card_used] -= tx.amount
+                net_and_bank[card_used] = cur_tx[card_used]
+            except BaseException as e:
+                print(type(e), e)
+            
+        if tx.amount < 0:
+            cur_tx['amount'] = '$('+str(cur_tx['amount'])+')'
+        else:
+            cur_tx['amount'] = '$'+str(cur_tx['amount'])
+        
+        tx_list.append(cur_tx)
+        del cur_tx['_state']
+        
+    tx_list.reverse()
+    return JsonResponse({'transactions':tx_list})
+    

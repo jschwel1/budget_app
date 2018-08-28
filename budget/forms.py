@@ -17,29 +17,27 @@ class TransactionForm(forms.ModelForm):
         model = Transaction
         fields = ('date', 'amount', 'category', 'location', 'notes', 'card_used')
     def __init__(self, user=None, *args, **kwargs):
-        print('Initializing form')
         super().__init__(*args, **kwargs)
-        print('Completed Super Init')
 
         categories = []
         if user != None:
-            print('user', user)
             for category in Category.objects.filter(user__exact=user):
                 categories.append((str(category.id), str(category)))
         else:
-            print('no user')
             for category in Category.objects.all():
                 categories.append((str(category.id), str(category)))
 
-        print('categories: ', categories)
         self.fields['category'].widget.choices=categories
-        print('added categories widget')
+        self.fields['category'].widget.attrs={'id':'form_category'}
         self.fields['date'].widget=forms.SelectDateWidget(empty_label=None,
                                         years=range(1950,datetime.date.today().year+2))
+        self.fields['date'].widget.attrs={'id':'form_date'}
         self.fields['location'].label='Location/To (for transfers)'
-        self.fields['location'].widget.attrs={'autocomplete':'off', 'list':'Locations'}
+        self.fields['location'].widget.attrs={'autocomplete':'off', 'list':'Locations', 'id': 'form_location'}
+        self.fields['amount'].widget.attrs={'id':'form_amount'}
+        self.fields['notes'].widget.attrs={'id':'form_notes'}
+        self.fields['card_used'].widget.attrs={'id':'form_card_used'}
         
-        print('Done')
 
 class BudgetForm(forms.ModelForm):
     class Meta:

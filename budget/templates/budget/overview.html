@@ -67,141 +67,8 @@
             </th>
             {% endfor %}
         </tr>
-        
-        {% for tx in all_transactions %}
-        <tr class='transactions' id='row_{{forloop.counter}}' name='{{tx.id}}' onClick="moveToForm({{forloop.counter}})">
-            <td class='transactions'>
-                {{forloop.counter}}
-            </td>
-            <td class='transactions' id='date_row_{{forloop.counter}}'>
-                {{tx.date|date:"F d, Y"}}
-            </td>
-            <td class='transactions' id='amount_row_{{forloop.counter}}'>
-                ${{tx.amount}}
-            </td>
-            <td class='transactions' id='category_row_{{forloop.counter}}'>
-                {{tx.category}}
-            </td>
-            <td class='transactions' id='location_row_{{forloop.counter}}'>
-                {{tx.location}}
-            </td>
-            <td class='transactions' id='notes_row_{{forloop.counter}}'>
-                {{tx.notes}}
-            </td>
-            <td class='transactions' id='card_used_row_{{forloop.counter}}'>
-                {{tx.card_used}}
-            </td>
-            <td class='transactions' id='net_row_{{forloop.counter}}'>
-                
-            </td>
-            {% for bank in all_banks %}
-            <td class='transactions' id='bank_{{bank}}_row_{{forloop.parentloop.counter}}'>
-               
-            </td>
-            {% endfor %}
-        </tr>
-        {% endfor %}
-        <tr>
-            <td class='transactions' colspan='7'>
-                Starting values
-            </td>
-            <td class='transactions' id='net_start'>
-                $0.00
-            </td>
-            {% for bank in all_banks %}
-            <td class='transactions' id='{{bank}}_start'>
-                ${{bank.starting_amount}}
-            </td>
-            {% endfor %}
-        </tr>
     </table>
 </div>
-
-
-{% for bank in all_banks %}
-    <div class="tabcontent" id='{{bank}}'>
-        <table id='transactions_table' class='transactions'>
-            <tr>
-                <th class='transactions'>
-                    #
-                </th>
-                <th class='transactions'>
-                    Date
-                </th>
-                <th class='transactions'>
-                    Amount
-                </th>
-                <th class='transactions'>
-                    Category
-                </th>
-                <th class='transactions'>
-                    Location
-                </th>
-                <th class='transactions'>
-                    Notes
-                </th>
-                <th class='transactions'>
-                    Card/Bank Used
-                </th>
-                <th class='transactions'>
-                    Net Change
-                </th>
-                {% for bank in all_banks %}
-                <th class='transactions'>
-                    {{bank}}
-                </th>
-                {% endfor %}
-            </tr>
-            
-            {% for tx in all_transactions %}
-            <tr class='transactions' id='row_{{forloop.counter}}' name='{{tx.id}}' onClick="moveToForm({{forloop.counter}})">
-                <td class='transactions'>
-                    {{forloop.counter}}
-                </td>
-                <td class='transactions' id='date_row_{{forloop.counter}}'>
-                    {{tx.date|date:"F d, Y"}}
-                </td>
-                <td class='transactions' id='amount_row_{{forloop.counter}}'>
-                    ${{tx.amount}}
-                </td>
-                <td class='transactions' id='category_row_{{forloop.counter}}'>
-                    {{tx.category}}
-                </td>
-                <td class='transactions' id='location_row_{{forloop.counter}}'>
-                    {{tx.location}}
-                </td>
-                <td class='transactions' id='notes_row_{{forloop.counter}}'>
-                    {{tx.notes}}
-                </td>
-                <td class='transactions' id='card_used_row_{{forloop.counter}}'>
-                    {{tx.card_used}}
-                </td>
-                <td class='transactions' id='net_row_{{forloop.counter}}'>
-                    
-                </td>
-                {% for bank in all_banks %}
-                <td class='transactions' id='bank_{{bank}}_row_{{forloop.parentloop.counter}}'>
-                   
-                </td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-            <tr>
-                <td class='transactions' colspan='7'>
-                    Starting values
-                </td>
-                <td class='transactions' id='net_start'>
-                    $0.00
-                </td>
-                {% for bank in all_banks %}
-                <td class='transactions' id='{{bank}}_start'>
-                    ${{bank.starting_amount}}
-                </td>
-                {% endfor %}
-            </tr>
-        </table>
-    </div>
-{% endfor %}
 
 <!-- Calculate the changes in net value and each bank's balance -->
 <script>
@@ -224,6 +91,11 @@
     category_lookup["{{category.category}}"] = {{category.id}};
     {% endfor %}
     
+    bank_list = []
+    {% for bank in all_banks %}
+    bank_list.push('{{bank.name}}')
+    {% endfor %}
+    console.log(bank_list)
     bank_lookup = {}
     {% for bank in all_banks %}
     bank_lookup["{{bank.name}}"] = {{bank.id}};
@@ -260,89 +132,75 @@
         document.getElementById('id_card_used').value = bank_lookup[card_used]
         document.getElementById('database_pk').value = document.getElementById("row_"+id_num).getAttribute("name")
     }
-    
-    text_to_float = function(amount_str=''){
-        
-        if (amount_str.match(/\(\d+\.\d\d\)/) !== null){
-            return -1*parseFloat(amount_str.match(/\((\d+\.\d\d)\)/)[1])
-        }
-        else {
-            return parseFloat(amount_str.match(/(\d+\.\d\d)/)[1])
-        }
-    }
-    
-    // Calculate net change
-    calculate_net_vals = function(){
-        start = document.getElementById('net_start');
-        num_rows = start.parentElement.parentElement.childElementCount
-        val = 0
-        for (i = num_rows-2; i > 0; i--){
-            // If notes say "balance" don't adjust
-            notes = document.getElementById('notes_row_'+i).innerText
-            category = document.getElementById('category_row_'+i).innerText
-            amount = document.getElementById('amount_row_'+i).innerText
-            amount = text_to_float(amount);
-            
-            if (notes.toLowerCase() !== 'balance'){
-                if (category.toLowerCase() === 'income')
-                    val = val+amount
-                else
-                    val = val-amount
-            }
-            if (val < 0) val_text = '$('+-1*val.toFixed(2)+')'
-            else val_text = '$'+val.toFixed(2)
-            document.getElementById('net_row_'+i).innerText = val_text
-        }
-    }
-    // Calculate the bank value rows
-    calculate_bank_vals = function(){
-        var banks = []
-        {% for bank in all_banks %}
-        banks.push("{{bank}}")
-        {% endfor %}
-        
-        banks.forEach(function(bank){
-            // get the starting value
-            start = document.getElementById(bank+'_start');
-            num_rows = start.parentElement.parentElement.childElementCount;
-            val = text_to_float(start.innerText);
-            for (i = num_rows-2; i > 0; i--){
-                notes = document.getElementById('notes_row_'+i).innerText;
-                category = document.getElementById('category_row_'+i).innerText;
-                amount = document.getElementById('amount_row_'+i).innerText;
-                card_used = document.getElementById('card_used_row_'+i).innerText;
-                amount = text_to_float(amount);
-                // Use value to update this bank's current amount
-                if (category.toLowerCase() == 'income'){
-                    if (card_used === bank){
-                        val = val+amount;
-                    }
-                    if (location === bank){
-                        val = val-amount;
-                    }
-                }
-                else {
-                    if (card_used === bank){
-                        val = val-amount;
-                    }
-                    if (location === bank){
-                        val = val+amount;
-                    }
-                }
-                
-                if (val < 0) val_text = '$('+-1*val.toFixed(2)+')'
-                else val_text = '$'+val.toFixed(2)
-                document.getElementById('bank_'+bank+'_row_'+i).innerText = val_text
-                
-            }
-        })
-    }
-    
+    /*
     // CALCULATE VALUES
     $(document).ready(function(){
-        calculate_net_vals()
-        calculate_bank_vals()
+        //calculate_net_vals()
+        //calculate_bank_vals()
     });
+    */
+    /** buildTable(data)
+     * This function takes the dictionary of lists and builds a table from
+     * it.
+     **/
+    function buildTable(data){
+        console.log(data)
+        
+        function addTdChild(row, text){
+            td = document.createElement('td')
+            td.setAttribute('class', 'transactions')
+            td.innerText = text
+            row.appendChild(td)
+        }
+        table = document.getElementById('transactions_table');
+        for(i = 0; i < data.length; i++){
+            // Create new row with onclick and onhover attributes
+            tr = document.createElement('tr');
+            tr.setAttribute('onmouseover','this.setAttribute("style","text-decoration:underline;")');
+            tr.setAttribute('onmouseout','this.setAttribute("style","text-decoration:none;")');
+            tr.setAttribute('onclick','moveToForm(event, this)');
+            tr.setAttribute('class', 'transactions')
+            // append each data item
+            num = data.length-i;
+            addTdChild(tr, num);
+            date = data[i]['date'];
+            addTdChild(tr, date);
+            amount = data[i]['amount'];
+            addTdChild(tr, amount);
+            category = data[i]['category'];
+            addTdChild(tr, category);
+            loc = data[i]['location'];
+            addTdChild(tr, loc);
+            notes = data[i]['notes'];
+            addTdChild(tr, notes);
+            card = data[i]['card_used'];
+            addTdChild(tr, card);
+            net = data[i]['net']
+            addTdChild(tr, net);
+            for (bank_idx = 0; bank_idx < bank_list.length; bank_idx++){
+                addTdChild(tr, data[i][bank_list[bank_idx]])
+            }
+            console.log(tr)
+            // append row to table
+            table.appendChild(tr)
+        }
+        
+    }
+    // Get data from ajax request
+    var endpoint = '/budget/get_overview_data'
+    
+    $.ajax({
+        method: "GET",
+        url: endpoint,
+        success: function(data){
+            buildTable(data['transactions'])
+        },
+        error: function(error_data){
+            console.log("Error: ")
+            console.log(error_data)
+        }
+        
+    })
 </script>
 <script>
 // Tab script
