@@ -7,7 +7,7 @@
 
 <!-- Tab options -->
 <div class="tab">
-    <button class="tablinks" onclick="openTab(event, 'data')">data</button>
+    <button class="tablinks" onclick="openTab(event, 'data')">Data</button>
     {% for bank in all_banks %}
     <button class="tablinks" onclick="openTab(event, '{{bank}}')">{{bank}}</button>
     {% endfor %}
@@ -95,60 +95,59 @@
     {% for bank in all_banks %}
     bank_list.push('{{bank.name}}')
     {% endfor %}
-    console.log(bank_list)
     bank_lookup = {}
     {% for bank in all_banks %}
     bank_lookup["{{bank.name}}"] = {{bank.id}};
     {% endfor %}
     
-    function moveToForm(id_num){
+    function moveToForm(event, row){
         // If this row is clicked, add its data to the form
-        date = document.getElementById("date_row_"+id_num).innerText
-        date = date.match(/(\w+) (\d+), (\d+)/)
-        date_month = month_dict[date[1]]
-        date_day = date[2]
-        date_year = date[3]
-        amount_text = document.getElementById("amount_row_"+id_num).innerText
-        amount=0
-        if (amount_text.match(/\(\d+\)/)){
-            amount = -1*parseFloat(amount_text.match(/\((\d+)\)/)[1],10)
-        }
-        else {
-            amount = parseFloat(amount_text.match(/(\d+)/)[1], 10)
+        row_arr = [...row.children]
+        function getElement(id){
+            return row_arr.filter(function(f){return f.id == id;})[0]
         }
         
-        category = document.getElementById("category_row_"+id_num).innerText
-        loc = document.getElementById("location_row_"+id_num).innerText
-        notes = document.getElementById("notes_row_"+id_num).innerText
-        card_used = document.getElementById("card_used_row_"+id_num).innerText
+        date = getElement("date").innerText;
+        date = date.match(/(\w+) (\d+), (\d+)/);
+        date_month = month_dict[date[1]];
+        date_day = date[2];
+        date_year = date[3];
+        amount_text = getElement("amount").innerText;
+        amount=0;
+        if (amount_text.match(/\(\d+\.\d\d\)/)){
+            amount = -1*parseFloat(amount_text.match(/\((\d+\.\d\d)\)/)[1],10);
+        }
+        else {
+            amount = parseFloat(amount_text.match(/(\d+\.\d\d)/)[1], 10);
+        }
+        
+        category = getElement("category").innerText;
+        loc = getElement("location").innerText;
+        notes = getElement("notes").innerText;
+        card_used = getElement("card_used").innerText;
+        
         // Add values to the form
-        document.getElementById('id_date_month').value = date_month
-        document.getElementById('id_date_day').value = date_day
-        document.getElementById('id_date_year').value = date_year
-        document.getElementById('id_amount').value = amount
-        document.getElementById('id_category').value = category_lookup[category]
-        document.getElementById('id_location').value = loc
-        document.getElementById('id_notes').value = notes
-        document.getElementById('id_card_used').value = bank_lookup[card_used]
-        document.getElementById('database_pk').value = document.getElementById("row_"+id_num).getAttribute("name")
+        form = document.forms[0];
+        form['date_month'].value = date_month;
+        form['date_day'].value = date_day;
+        form['date_year'].value = date_year;
+        form['amount'].value = amount;
+        form['category'].value = category_lookup[category];
+        form['location'].value = loc;
+        form['notes'].value = notes;
+        form['card_used'].value = bank_lookup[card_used];
+        form['database_pk'].value = row.getAttribute('name')
     }
-    /*
-    // CALCULATE VALUES
-    $(document).ready(function(){
-        //calculate_net_vals()
-        //calculate_bank_vals()
-    });
-    */
     /** buildTable(data)
      * This function takes the dictionary of lists and builds a table from
      * it.
      **/
     function buildTable(data){
-        console.log(data)
         
-        function addTdChild(row, text){
+        function addTdChild(row, text, id=''){
             td = document.createElement('td')
             td.setAttribute('class', 'transactions')
+            td.setAttribute('id', id)
             td.innerText = text
             row.appendChild(td)
         }
@@ -160,27 +159,27 @@
             tr.setAttribute('onmouseout','this.setAttribute("style","text-decoration:none;")');
             tr.setAttribute('onclick','moveToForm(event, this)');
             tr.setAttribute('class', 'transactions')
+            tr.setAttribute('name', data[i].id)
             // append each data item
             num = data.length-i;
             addTdChild(tr, num);
             date = data[i]['date'];
-            addTdChild(tr, date);
+            addTdChild(tr, date, 'date');
             amount = data[i]['amount'];
-            addTdChild(tr, amount);
+            addTdChild(tr, amount, 'amount');
             category = data[i]['category'];
-            addTdChild(tr, category);
+            addTdChild(tr, category, 'category');
             loc = data[i]['location'];
-            addTdChild(tr, loc);
+            addTdChild(tr, loc, 'location');
             notes = data[i]['notes'];
-            addTdChild(tr, notes);
+            addTdChild(tr, notes, 'notes');
             card = data[i]['card_used'];
-            addTdChild(tr, card);
+            addTdChild(tr, card, 'card_used');
             net = data[i]['net']
             addTdChild(tr, net);
             for (bank_idx = 0; bank_idx < bank_list.length; bank_idx++){
                 addTdChild(tr, data[i][bank_list[bank_idx]])
             }
-            console.log(tr)
             // append row to table
             table.appendChild(tr)
         }

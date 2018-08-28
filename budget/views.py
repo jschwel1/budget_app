@@ -220,7 +220,7 @@ def get_overview_data(request):
                 print(type(e), e)
             
         if tx.amount < 0:
-            cur_tx['amount'] = '$('+str(cur_tx['amount'])+')'
+            cur_tx['amount'] = '$('+str(-1*cur_tx['amount'])+')'
         else:
             cur_tx['amount'] = '$'+str(cur_tx['amount'])
         
