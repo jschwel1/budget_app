@@ -17,15 +17,15 @@
         
     </div>
     <nav class="navbar navbar-inverse">
-        <ul class="nav navbar-nav">
-            <li role="presentation"><a href="{% url 'budget:home' %}">Home</a></li>
-            <li role="presentation"><a href="{% url 'budget:config' %}">Config</a></li>
-            <li role="presentation"><a href="{% url 'budget:overview' %}">Overview</a></li>
+        <ul class="nav navbar-nav" style='width:100%;'>
+            <li><a href="{% url 'budget:home' %}">Home</a></li>
+            <li><a href="{% url 'budget:config' %}">Config</a></li>
+            <li><a href="{% url 'budget:overview' %}">Overview</a></li>
             {% if user.is_authenticated %}
-            <li role="presentation"><a href="{% url 'budget:logout' %}">Logout</a></li>
-            <li role="presentation" class="disabled"><a>{{user.username}}</a></li>
+            <li><a href="{% url 'budget:logout' %}">Logout</a></li>
+            <li style='float:right;'><a style='color:white;'>{{user.username}}</a></li>
             {% else %}
-            <li role="presentation"><a href="{% url 'budget:login' %}">Login</a></li>
+            <li><a href="{% url 'budget:login' %}">Login</a></li>
             {% endif %}
         </ul>
         

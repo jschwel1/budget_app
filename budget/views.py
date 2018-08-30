@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from .models import Bank, Category, Transaction, Budget, BudgetCategory
 from .forms import TransactionForm
-import traceback, json
+import traceback, json, re
 
 # Create your views here.
 
@@ -76,7 +76,18 @@ def config_page(request):
     context = {}
     user = get_user(request)
     # Get all configurable data
+    if request.method == 'POST':
+        cat_list = request.POST.get('categories', '')
+        cat_list = set(re.split('\r?\n',cat_list))
+        print(cat_list)
+        cur_cats = set(Category.objects.filter(user=user).values_list('category', flat=True))
+        print('need to add:', cat_list.difference(cur_cats))
+        print('need to remove:', cur_cats.difference(cat_list))
     
+    all_categories = Category.objects.filter(user=user).values_list('category', flat=True)
+    context = {
+        'all_categories': all_categories,
+    }
     return render(request, 'budget/config.html', context)
 
 @login_required

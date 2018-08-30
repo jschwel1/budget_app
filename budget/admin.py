@@ -4,11 +4,11 @@ from budget.models import Bank, Category, Transaction, Budget, BudgetCategory
 # Register your models here.
 
 class BankAdmin(admin.ModelAdmin):
-    list_display = ['name', 'starting_amount']
+    list_display = ['name', 'starting_amount', 'display']
 admin.site.register(Bank, BankAdmin);
 
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ['category', 'user']
+    list_display = ['category', 'user', 'enabled']
 admin.site.register(Category, CategoryAdmin);
 
 class TransactionAdmin(admin.ModelAdmin):

@@ -11,6 +11,7 @@ class Bank(models.Model):
     starting_amount = models.DecimalField(max_digits=15, decimal_places=2)
     name = models.CharField(max_length=64)
     user = models.ForeignKey(User, on_delete=models.CASCADE, default=User.objects.all()[0].id)
+    display = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name
@@ -20,7 +21,7 @@ class Category(models.Model):
         verbose_name_plural = "Categories"
     category = models.CharField(max_length=65)
     user = models.ForeignKey(User, on_delete=models.CASCADE, default=User.objects.all()[0].id)
-    
+    enabled = models.BooleanField(default=True)
     def __str__(self):
         return self.category;
 
