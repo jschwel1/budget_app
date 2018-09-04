@@ -3,106 +3,73 @@
 {% block body %}
 <h2> Welcome to the Config  page</h2>
 
-<form method='POST' action="{% url 'budget:config' %}">
-    {%csrf_token%}
+
+
+<!-- Tab options -->
+<div class="tab">
+    <button class="tablinks active" onclick="openTab(event, 'categories')">Categories</button>
+    <button class="tablinks" onclick="openTab(event, 'banks')">Banks</button>
+    <button class="tablinks" onclick="openTab(event, 'budgets')">Budgets</button>
+</div>
+
+
+
+<div class="tabcontent" id='categories' style='display:block;'>
+    <form method='POST' action="{% url 'budget:config' %}">
+        {%csrf_token%}
+        <input type='text' id='new_category' onKeyPress='categoryPressEnter(this, event, "category_list", "category_textarea")'>
+        <button type='button' onclick="addCategoryToLists('new_category','category_list','category_textarea')">Add</button>
+        <textarea name='categories' id='category_textarea' style='display:none;'></textarea>
+        <table>
+            <tr>
+                <th style='padding-right: 10px; padding-left: 10px;'>Category Name</th>
+                <th style='padding-right: 10px; padding-left: 10px;'>Disable</th>
+                <th style='padding-right: 10px; padding-left: 10px;'>Delete</th>
+            </tr>
+            {% for category in all_categories %}
+            <tr class='formRow'>
+                <td style="padding-right:10px;"><input type='text' class='category_input' name='{{category.id}}__category' value='{{category.category}}'></td>
+                <td style="text-align: center;"><input type='checkbox' name='{{category.id}}__display' value='{{category.display}}'></td>
+                <td style="text-align: center;"><input type='checkbox' name='{{category.id}}__delete' value='0' onchange='deleteRow(this)'></td>
+            </tr>
+            {% endfor %}
+        </table>
+        <input type='submit' value='Submit' onclick='submissionCheck(event)'>
+        
+    </form>
+</div>
+
+
+<div class="tabcontent" id='banks' style='display:block;'>
     
-    <h3>Categories</h3>
-    <input type='text' id='new_category' onKeyPress='categoryPressEnter(this, event, "category_list", "category_textarea")'>
-    <button type='button' onclick="addCategoryToLists('new_category','category_list','category_textarea')">Add</button>
-    <textarea name='categories' id='category_textarea' style='display:none;'></textarea>
-    <ul id='category_list'>
-        <!--{% for category in all_categories %}-->
-        <!--<li onclick='removeCategoryFromLists(this,category_textarea)' -->
-        <!--    onmouseover='this.setAttribute("style", "text-decoration:line-through")'-->
-        <!--    onmouseout='this.setAttribute("style", "text-decoration:inherit")'>-->
-        <!--    {{category}}-->
-        <!--</li>-->
-        <!--{% endfor %}-->
-    </ul>
-    <input type='submit' value='Submit' onclick='submissionCheck(event)'>
+</div>
+
+
+<div class="tabcontent" id='budgets' style='display:block;'>
     
-    <hr>
-    
-    <h3>Budgets</h3>
-    <hr>
-    
-    
-    <h3>Banks</h3>
-    
-    <hr>
-</form>
+</div>
 
 <script>
-    // Variables
-    var removedCategories = []
-    var originalCategories = []
-    {% for category in all_categories %}
-    addCategoryValueToLists('{{category}}', 'category_list', 'category_textarea')
-    originalCategories.push('{{category}}')
-    {% endfor %}
-    
-    function categoryListToTextArea(list_id, textArea_id){
-        list = document.getElementById(list_id);
-        textarea = document.getElementById(textArea_id);
-        str = '';
-        for (idx = 0; idx < list.childElementCount; idx++){
-            str += list.children[idx].innerText + '\n';
-        textarea.value = str;
-        }
+
+function deleteRow(cb){
+    row = cb.parentElement;
+    row.classList.toggle('deleteRow')
+}
+
+// Tab script
+function openTab(evt, tabName) {
+    var i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
     }
-    function addCategoryValueToLists(value, list_id, textArea_id){
-        ul = document.getElementById(list_id);
-        li = document.createElement('li');
-        li.innerText = value;
-        li.setAttribute('onclick', 'removeCategoryFromLists(this,"'+textArea_id+'")')
-        li.setAttribute('onmouseover','this.setAttribute("style","text-decoration:line-through;")')
-        li.setAttribute('onmouseout','this.setAttribute("style","text-decoration:inherit;")')
-        ul.appendChild(li);
-        
-        categoryListToTextArea(list_id, textArea_id);
-        
+    tablinks = document.getElementsByClassName("tablinks");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
     }
-    function addCategoryToLists(input_id, list_id, textArea_id){
-        input = document.getElementById(input_id);
-        item = input.value;
-        input.value=''; //clear it now that it's used
-        addCategoryValueToLists(item, list_id, textArea_id);
-    }
-    function removeCategoryFromLists(li, textArea_id){
-        ul_id = li.parentElement.id
-        removedCategories.push(li.innerText)
-        li.parentElement.removeChild(li)
-        categoryListToTextArea(ul_id, textArea_id)
-    }
-    
-    function categoryPressEnter(element, event, list_id, textArea_id){
-        if (event.key == "Enter"){
-            addCategoryToLists(element.id, list_id, textArea_id);
-            event.preventDefault();
-        }
-    }
-    
-    function submissionCheck(event){
-        originalCategories.sort()
-        removedCategories.sort()
-        // remove anything from removedCategories that is not in originalCategories
-        removedCategories.filter(function(cat){
-            return !originalCategories.includes(cat);
-        })
-        if (removedCategories.length > 0){
-            if(confirm("Are you sure you want to remove:\n"+removedCategories)){
-                alert('updated categories')
-            }
-            else{
-                event.preventDefault()
-            }
-            
-        }
-        
-    }
-    
-    
-    
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.className += " active";
+}
 </script>
 
 {% endblock %}

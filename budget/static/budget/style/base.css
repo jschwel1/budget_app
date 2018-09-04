@@ -28,10 +28,10 @@ li.topnav a {
 li.topnav a:hover:not(.active) {
     background-color: #111;
 }
-*/
 .active {
     background-color: #4CAF50;
 }
+*/
 h4{
     font-color:blue;
 }
@@ -44,7 +44,7 @@ table.transactions, th.transactions, td.transactions{
     padding:1em;
     margin:1em;
 }
-tr.transactions:nth-child(even){
+tr.transactions:nth-child(even), tr.formRow:nth-child(even){
     background-color: #CCC;
 }
 tr.transactions:nth-child(odd){
@@ -96,3 +96,24 @@ tr.transactions:hover{
   padding-top: 102px;
 }
 */
+
+.deleteRow{
+    color:red;
+    text-decoration:line-through;
+}
+
+
+input[type=text].category_input{
+    border: 1px solid black;
+    /*border-radius: 10px;*/
+    background: none;
+    padding-left: 10px;
+}
+input[type=text].category_input:focus{
+    border-bottom: 1px solid #AAAAAA;
+}
+
+.formRow{
+    border-radius: 5px;
+    border: none;
+}

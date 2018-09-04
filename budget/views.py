@@ -77,14 +77,8 @@ def config_page(request):
     user = get_user(request)
     # Get all configurable data
     if request.method == 'POST':
-        cat_list = request.POST.get('categories', '')
-        cat_list = set(re.split('\r?\n',cat_list))
-        print(cat_list)
-        cur_cats = set(Category.objects.filter(user=user).values_list('category', flat=True))
-        print('need to add:', cat_list.difference(cur_cats))
-        print('need to remove:', cur_cats.difference(cat_list))
-    
-    all_categories = Category.objects.filter(user=user).values_list('category', flat=True)
+        pass
+    all_categories = Category.objects.filter(user=user)
     context = {
         'all_categories': all_categories,
     }
@@ -237,7 +231,17 @@ def get_overview_data(request):
             except BaseException as e:
                 print(type(e), e)
                 traceback.print_exc()
-            
+        
+        for bank in all_banks:
+            if (cur_tx[bank.name] < 0):
+                cur_tx[bank.name] = '$(' + str(-1*cur_tx[bank.name]) + ')'
+            else:
+                cur_tx[bank.name] = '$' + str(cur_tx[bank.name])
+        if (cur_tx['net'] < 0):
+            cur_tx['net'] = '$(' + str(-1*cur_tx['net']) + ')'
+        else:
+            cur_tx['net'] = '$' + str(cur_tx['net'])
+        
         if tx.amount < 0:
             cur_tx['amount'] = '$('+str(-1*cur_tx['amount'])+')'
         else:
