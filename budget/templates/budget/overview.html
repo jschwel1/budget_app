@@ -7,7 +7,7 @@
 
 <!-- Tab options -->
 <div class="tab">
-    <button class="tablinks active" onclick="openTab(event, 'data')">Data</button>
+    <button class="tablinks active" onclick="openTab(event, 'all')">All</button>
     {% for bank in all_banks %}
     <button class="tablinks" onclick="openTab(event, '{{bank}}')">{{bank}}</button>
     {% endfor %}
@@ -99,6 +99,8 @@
     {% for bank in all_banks %}
     bank_lookup["{{bank.name}}"] = {{bank.id}};
     {% endfor %}
+    
+    var table_backup;
     
     function moveToForm(event, row){
         // If this row is clicked, add its data to the form
@@ -192,7 +194,8 @@
         method: "GET",
         url: endpoint,
         success: function(data){
-            buildTable(data['transactions'])
+            buildTable(data['transactions']);
+            table_backup = document.getElementById('transactions_table').cloneNode(true);
         },
         error: function(error_data){
             console.log("Error: ")
@@ -206,15 +209,30 @@
 function openTab(evt, tabName) {
     var i, tabcontent, tablinks;
     tabcontent = document.getElementsByClassName("tabcontent");
-    for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-    }
+    // for (i = 0; i < tabcontent.length; i++) {
+    //     tabcontent[i].style.display = "none";
+    // }
     tablinks = document.getElementsByClassName("tablinks");
     for (i = 0; i < tablinks.length; i++) {
         tablinks[i].className = tablinks[i].className.replace(" active", "");
     }
-    document.getElementById(tabName).style.display = "block";
+    // document.getElementById(tabName).style.display = "block";
     evt.currentTarget.className += " active";
+    
+    table = document.getElementById('transactions_table');
+    // Put all elements back into table
+    table.replaceWith(table_backup.cloneNode(true));
+    table = document.getElementById('transactions_table');
+    if (tabName != 'all'){
+        console.log('Removing everything without ' + tabName)
+        for (i = 1; i < table.childElementCount; i++){
+        
+            if (!table.children[i].innerText.includes(tabName)){
+                table.removeChild(table.children[i]);
+                i--;
+            }
+        }
+    }
 }
 </script>
 {% endblock %}
