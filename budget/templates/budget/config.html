@@ -24,13 +24,11 @@
             <tr>
                 <th style='padding-right: 10px; padding-left: 10px;'>Category Name</th>
                 <th style='padding-right: 10px; padding-left: 10px;'>Disable</th>
-                <th style='padding-right: 10px; padding-left: 10px;'>Delete</th>
             </tr>
             {% for category in all_categories %}
             <tr class='formRow'>
                 <td style="padding-right:10px;"><input type='text' class='category_input' name='{{category.id}}__category' value='{{category.category}}'></td>
                 <td style="text-align: center;"><input type='checkbox' name='{{category.id}}__display' value='{{category.display}}'></td>
-                <td style="text-align: center;"><input type='checkbox' name='{{category.id}}__delete' value='0' onchange='deleteRow(this)'></td>
             </tr>
             {% endfor %}
         </table>

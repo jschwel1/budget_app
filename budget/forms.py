@@ -34,7 +34,7 @@ class TransactionForm(forms.ModelForm):
         self.fields['date'].widget.attrs={'id':'form_date'}
         self.fields['location'].label='Location/To (for transfers)'
         self.fields['location'].widget.attrs={'autocomplete':'off', 'list':'Locations', 'id': 'form_location'}
-        self.fields['amount'].widget.attrs={'id':'form_amount'}
+        self.fields['amount'].widget.attrs={'id':'form_amount', 'step':'0.01'}
         self.fields['notes'].widget.attrs={'id':'form_notes'}
         self.fields['card_used'].widget.attrs={'id':'form_card_used'}
         

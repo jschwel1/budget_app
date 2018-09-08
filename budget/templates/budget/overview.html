@@ -207,6 +207,7 @@
 <script>
 // Tab script
 function openTab(evt, tabName) {
+    console.log('Starting...')
     var i, tabcontent, tablinks;
     tabcontent = document.getElementsByClassName("tabcontent");
     // for (i = 0; i < tabcontent.length; i++) {
@@ -223,14 +224,17 @@ function openTab(evt, tabName) {
     // Put all elements back into table
     table.replaceWith(table_backup.cloneNode(true));
     table = document.getElementById('transactions_table');
-    if (tabName != 'all'){
-        console.log('Removing everything without ' + tabName)
-        for (i = 1; i < table.childElementCount; i++){
-        
-            if (!table.children[i].innerText.includes(tabName)){
-                table.removeChild(table.children[i]);
-                i--;
-            }
+    console.log('Removing Nodes...')
+    if (tabName == 'all'){
+        return;
+    }
+    arr = [... table.children].filter(function (row){
+        return !table.children[i].innerText.includes(tabName);
+    });
+    for (i = 1; i < table.childElementCount; i++){
+        if (!table.children[i].innerText.includes(tabName)){
+            table.removeChild(table.children[i]);
+            i--;
         }
     }
 }

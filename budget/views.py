@@ -78,6 +78,13 @@ def config_page(request):
     # Get all configurable data
     if request.method == 'POST':
         pass
+        # Categories
+        
+        
+        # Banks
+        
+        # Budgets
+    
     all_categories = Category.objects.filter(user=user)
     context = {
         'all_categories': all_categories,
