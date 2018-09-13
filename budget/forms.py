@@ -49,3 +49,5 @@ class BudgetCategoryForm(forms.ModelForm):
         model = BudgetCategory
         fields = ('budget', 'category', 'amount')
 
+class UploadFileForm(forms.Form):
+    file = forms.FileField()

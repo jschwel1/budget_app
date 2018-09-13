@@ -43,6 +43,7 @@ table.transactions, th.transactions, td.transactions{
     border: 1px solid black;
     padding:1em;
     margin:1em;
+    backgound-color: #CCC;
 }
 tr.transactions:nth-child(even), tr.formRow:nth-child(even){
     background-color: #CCC;

@@ -3,8 +3,40 @@
 {% block title %}Overview{% endblock %}
 
 {% block body %}
-<h2> Welcome to Overview page</h2>
+<h5> Add new entry:</h5>
+<div class='row' >
+    <div class='col-md-5 offset-md-1'>
+        <form action="{% url 'budget:overview' %}" method='POST' id='transaction_form'>
+            {% csrf_token %}
+            <input type='hidden' name='pk' id='database_pk' value='{{pk}}'>
+            <table>
+                {{tx_form.as_table}}
+            </table>
+            <input type='submit' name='submit_new' value='Submit'>
+            <input type='submit' name='update' value='Update'>
+            <input type='submit' name='delete' value='Delete'>
+            
+            <datalist id='Locations'>
+                {% for location in locations %}
+                <option value="{{location}}">
+                {% endfor %}
+            </datalist>
+        </form>
+    </div>
+    <div class='col-md-5 offset-md-1'>
+        <form action="{% url 'budget:overview' %}" method="POST">
+            {% csrf_token %}
+            <div class='row'>
+                {{file_form.as_table}}
+            </div>
+            <div class='row'>
+                <input type='submit' name='upload_bulk' value='Upload From File'>
+            </div>
+        </form>
+    </div>
+</div>
 
+<hr style='width:75%; background-color:black'>
 <!-- Tab options -->
 <div class="tab">
     <button class="tablinks active" onclick="openTab(event, 'all')">All</button>
@@ -12,28 +44,11 @@
     <button class="tablinks" onclick="openTab(event, '{{bank}}')">{{bank}}</button>
     {% endfor %}
 </div>
+    
+
 <!-- Tab Divs -->
 <div class="tabcontent" id='data' style='display:block;'>
-    <div class='row'>
-        <div style='margin: 1em;'>
-            <form action="{% url 'budget:overview' %}" method='POST' id='transaction_form'>
-                {% csrf_token %}
-                <input type='hidden' name='pk' id='database_pk' value='{{pk}}'>
-                <table>
-                    {{tx_form.as_table}}
-                </table>
-                <input type='submit' name='submit_new' value='Submit'>
-                <input type='submit' name='update' value='Update'>
-                <input type='submit' name='delete' value='Delete'>
-                
-                <datalist id='Locations'>
-                    {% for location in locations %}
-                    <option value="{{location}}">
-                    {% endfor %}
-                </datalist>
-            </form>
-        </div>
-    </div>
+   
     
     <table id='transactions_table' class='transactions'>
         <tr class='header' id='transaction_header'>
@@ -207,7 +222,6 @@
 <script>
 // Tab script
 function openTab(evt, tabName) {
-    console.log('Starting...')
     var i, tabcontent, tablinks;
     tabcontent = document.getElementsByClassName("tabcontent");
     // for (i = 0; i < tabcontent.length; i++) {
@@ -221,22 +235,29 @@ function openTab(evt, tabName) {
     evt.currentTarget.className += " active";
     
     table = document.getElementById('transactions_table');
-    // Put all elements back into table
-    table.replaceWith(table_backup.cloneNode(true));
-    table = document.getElementById('transactions_table');
-    console.log('Removing Nodes...')
-    if (tabName == 'all'){
-        return;
+    while(table.children[1]) {
+        table.removeChild(table.children[1])
     }
-    arr = [... table.children].filter(function (row){
-        return !table.children[i].innerText.includes(tabName);
-    });
-    for (i = 1; i < table.childElementCount; i++){
-        if (!table.children[i].innerText.includes(tabName)){
-            table.removeChild(table.children[i]);
-            i--;
+    
+    if (tabName == 'all')
+        var endpoint = '/budget/get_overview_data';
+    else
+        var endpoint = '/budget/get_overview_data/'+tabName;
+    
+    $.ajax({
+        method: "GET",
+        url: endpoint,
+        success: function(data){
+            buildTable(data['transactions']);
+            table_backup = document.getElementById('transactions_table').cloneNode(true);
+        },
+        error: function(error_data){
+            console.log("Error: ")
+            console.log(error_data)
         }
-    }
+    })
+    
+    
 }
 </script>
 {% endblock %}

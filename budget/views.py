@@ -2,9 +2,10 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout, get_user
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.http import JsonResponse
 from .models import Bank, Category, Transaction, Budget, BudgetCategory
-from .forms import TransactionForm
+from .forms import TransactionForm, UploadFileForm
 import traceback, json, re
 
 # Create your views here.
@@ -124,7 +125,7 @@ def overview_page(request):
                     print(str(type(e)),': ', e)
                     traceback.print_exc()
             # delete entry
-            else:
+            elif request.POST.get('delete','') != '':
                 pk = request.POST.get('pk')
                 try:
                     # Get list as displayed
@@ -148,6 +149,8 @@ def overview_page(request):
                     traceback.print_exc()
                     pk = ''
                     tx_form = TransactionForm(user=user)
+            elif request.POST.get('upload_bulk', '') != '':
+               pass
     else:
         tx_form = TransactionForm(user=user)
     
@@ -169,16 +172,25 @@ def overview_page(request):
         'all_banks': all_banks,
         'locations': locations,
         'all_categories': all_categories,
+        'file_form': UploadFileForm(),
     }
     return render(request, 'budget/overview.html', context)
 
 
 @login_required
-def get_overview_data(request):
+def get_overview_data(request, bank=None):
     user = get_user(request)
     
-    all_transactions = Transaction.objects.filter(user__exact=user).order_by('date') # reversed, but will be flipped after calculations
-    all_banks = Bank.objects.filter(user=user)
+    if (bank == None):
+        all_transactions = Transaction.objects.filter(user__exact=user).order_by('date') # reversed, but will be flipped after calculations
+        all_banks = Bank.objects.filter(user=user)
+    else:
+        
+        all_transactions = Transaction.objects.filter(user__exact=user)\
+                                .filter(Q(location__exact=bank)|Q(card_used__name__exact=bank))\
+                                .order_by('date') # reversed, but will be flipped after calculations
+        all_banks = Bank.objects.filter(user=user).filter(name__exact=bank)
+        
     all_categories = Category.objects.filter(user__exact=user)
     
     # Get net and bank values
@@ -187,7 +199,6 @@ def get_overview_data(request):
     for bank in all_banks:
         net_and_bank[bank.name] = bank.starting_amount
     
-        
     tx_list = []
     for tx in all_transactions:
         cur_tx = vars(tx)

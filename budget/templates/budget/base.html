@@ -1,9 +1,11 @@
 <!Doctype html>
-<html>
+<html lang='en'>
 <head>
+<!-- Required meta tags -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
     {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'budget/style/base.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'budget/style/bootstrap.min.css' %}" />
@@ -13,36 +15,25 @@
     <title>{%block title%}{%endblock%}</title>
 </head>
 <body>
-    <div class="container" style="width: 100%">
-        
-    </div>
-    <nav class="navbar navbar-inverse">
-        <ul class="nav navbar-nav" style='width:100%;'>
-            <li><a href="{% url 'budget:home' %}">Home</a></li>
-            <li><a href="{% url 'budget:config' %}">Config</a></li>
-            <li><a href="{% url 'budget:overview' %}">Overview</a></li>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="navbar-nav" style='width:100%;'>
+            <a class="nav-item nav-link" href="{% url 'budget:home' %}">Home</a>
+            <a class="nav-item nav-link" href="{% url 'budget:config' %}">Config</a>
+            <a class="nav-item nav-link" href="{% url 'budget:overview' %}">Overview</a>
+            
             {% if user.is_authenticated %}
-            <li><a href="{% url 'budget:logout' %}">Logout</a></li>
-            <li style='float:right;'><a style='color:white;'>{{user.username}}</a></li>
+            <a class="nav-item nav-link" href="{% url 'budget:logout' %}">Logout</a>
+           
+            <div class="collapse navbar-collapse" id="navbarText">
+            </div>
+            <a class='nav-item nav-link disabled' style='float:right;'> {{user.username}}</a>
             {% else %}
-            <li><a href="{% url 'budget:login' %}">Login</a></li>
+            
+            <a class="nav-item nav-link" href="{% url 'budget:login' %}">Login</a>
             {% endif %}
-        </ul>
-        
+        </div>
     </nav>
-<!--
-<ul class="topnav">
-    <li class="topnav"><a href="{% url 'budget:home' %}">Home</a></li>
-    <li class="topnav"><a href="{% url 'budget:config' %}">Configure</a></li>
-    <li class="topnav"><a href="{% url 'budget:overview' %}">Overview</a></li>
-    {% if user.is_authenticated %}
-    <li class="topnav"><a href="{% url 'budget:logout' %}">Logout</a></li>
-    <li class="topnav" style='float:right'><a>{{user.username}}</a></li>
-    {% else %}
-    <li class="topnav"><a href="{% url 'budget:login' %}">Login</a></li>
-    {% endif %}
-</ul>
--->
+    
 <div class='body_contents'>
 {%block body%}{%endblock%}
 </div>
