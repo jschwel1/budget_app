@@ -78,10 +78,50 @@ def config_page(request):
     user = get_user(request)
     # Get all configurable data
     if request.method == 'POST':
-        pass
         # Categories
+        # Add new categories (if blank or disabled, ignore)
+        new_categories = {nc:request.POST.get(nc, '')
+                            for nc in request.POST
+                            if nc.startswith('new__')}
+                            
+        existing_categories = {ec:request.POST.get(ec, '')
+                            for ec in request.POST
+                            if ec.startswith('existing__')}
         
-        
+        for nc in new_categories:
+            nc_name = request.POST.get(nc,'');
+            # If the new category is enabled and not empty
+            if nc_name != '' and request.POST.get('new__'+nc_name+'__enabled', '') != '':
+                if (len(Category.objects.filter(user=user).filter(category__iexact=nc_name))==0):
+                    new_cat = Category(category=nc_name, user=user)
+                    new_cat.save()
+            
+        # Update existing ones (if they changed)
+        for ec in existing_categories:
+            if (ec.endswith('enabled')): continue
+            cat_id = re.split('existing__(\d+)__category', ec)[1]
+            name = request.POST.get(ec, '')
+            isEnabled = request.POST.get('existing__'+cat_id+'__enabled', '')
+            # If entire category is deleted, disabled, and there are no transactions for it, it can be removed
+            if (name == '' and isEnabled == ''):
+                if(len(Transaction.objects.filter(category__id=int(cat_id))) == 0):
+                    Category.objects.get(id=cat_id).delete()
+            else:
+                # If the name changed, update it
+                if (name != Category.objects.get(id=int(cat_id)).category):
+                    if (name != '' and len(Category.objects.filter(user=user).filter(category__exact=name)) == 0):
+                        cat = Category.objects.get(id=int(cat_id))
+                        cat.category = name;
+                        cat.save()
+                if (isEnabled != ''):
+                    cat = Category.objects.get(id=int(cat_id))
+                    cat.enabled = True
+                    cat.save()
+                else:
+                    cat = Category.objects.get(id=int(cat_id))
+                    cat.enabled = False
+                    cat.save()
+                
         # Banks
         
         # Budgets

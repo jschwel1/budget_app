@@ -17,22 +17,22 @@
 <div class="tabcontent" id='categories' style='display:block;'>
     <form method='POST' action="{% url 'budget:config' %}">
         {%csrf_token%}
-        <input type='text' id='new_category' onKeyPress='categoryPressEnter(this, event, "category_list", "category_textarea")'>
-        <button type='button' onclick="addCategoryToLists('new_category','category_list','category_textarea')">Add</button>
+        <input type='text' id='new_category' onKeyPress='categoryPressEnter(event)' maxlength='64'>
+        <button type='button' onclick="addCategory()">Add</button>
         <textarea name='categories' id='category_textarea' style='display:none;'></textarea>
-        <table>
+        <table id='category_table'>
             <tr>
                 <th style='padding-right: 10px; padding-left: 10px;'>Category Name</th>
-                <th style='padding-right: 10px; padding-left: 10px;'>Disable</th>
+                <th style='padding-right: 10px; padding-left: 10px;'>Enabled</th>
             </tr>
             {% for category in all_categories %}
             <tr class='formRow'>
-                <td style="padding-right:10px;"><input type='text' class='category_input' name='{{category.id}}__category' value='{{category.category}}'></td>
-                <td style="text-align: center;"><input type='checkbox' name='{{category.id}}__display' value='{{category.display}}'></td>
+                <td style="padding-right:10px;"><input type='text' class='category_input' name='existing__{{category.id}}__category' value='{{category.category}}'></td>
+                <td style="text-align: center;"><input type='checkbox' name='existing__{{category.id}}__enabled' {% if category.enabled %} checked {%endif%}></td>
             </tr>
             {% endfor %}
         </table>
-        <input type='submit' value='Submit' onclick='submissionCheck(event)'>
+        <input type='submit' value='Submit' >
         
     </form>
 </div>
@@ -49,11 +49,6 @@
 
 <script>
 
-function deleteRow(cb){
-    row = cb.parentElement;
-    row.classList.toggle('deleteRow')
-}
-
 // Tab script
 function openTab(evt, tabName) {
     var i, tabcontent, tablinks;
@@ -69,5 +64,41 @@ function openTab(evt, tabName) {
     evt.currentTarget.className += " active";
 }
 </script>
+
+<!--Categories JS-->
+
+<script>
+    function isAlphaNum(ch){
+      return /^[A-Za-z0-9 -]$/i.test(ch);
+    }
+    function addCategory(){
+        table = document.getElementById('category_table');
+        new_row = table.insertRow(1);
+        input = new_row.insertCell(0);
+        enabled = new_row.insertCell(1);
+        category = document.getElementById('new_category').value;
+        document.getElementById('new_category').value = '';
+        
+        new_row.classList.add('formRow');
+        input.innerHTML = "<input type='text' class='category_input' name='new__"+category+"' value='"+category+"'>";
+        input.style.paddingRight = '10px';
+        enabled.innerHTML = "<input type='checkbox' name='new__"+category+"__enabled' checked>";
+        enabled.style.textAlign='center';
+        console.log(enabled)
+    }
+    function categoryPressEnter(event){
+        if (!isAlphaNum(event.key)){
+            event.preventDefault();
+        }
+        if (event.key == "Enter"){
+            addCategory();
+            event.preventDefault();
+        }
+    }
+    function submitCategories(){
+        
+    }
+</script>
+
 
 {% endblock %}
