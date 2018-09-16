@@ -218,19 +218,12 @@ def overview_page(request):
 
 
 @login_required
-def get_overview_data(request, bank=None):
+def get_overview_data(request):
     user = get_user(request)
     
-    if (bank == None):
-        all_transactions = Transaction.objects.filter(user__exact=user).order_by('date') # reversed, but will be flipped after calculations
-        all_banks = Bank.objects.filter(user=user)
-    else:
-        
-        all_transactions = Transaction.objects.filter(user__exact=user)\
-                                .filter(Q(location__exact=bank)|Q(card_used__name__exact=bank))\
-                                .order_by('date') # reversed, but will be flipped after calculations
-        all_banks = Bank.objects.filter(user=user).filter(name__exact=bank)
-        
+    all_transactions = Transaction.objects.filter(user__exact=user).order_by('date') # reversed, but will be flipped after calculations
+    all_banks = Bank.objects.filter(user=user)
+    
     all_categories = Category.objects.filter(user__exact=user)
     
     # Get net and bank values
@@ -311,3 +304,84 @@ def get_overview_data(request, bank=None):
     tx_list.reverse()
     return JsonResponse({'transactions':tx_list})
     
+
+
+@login_required
+def get_individual_overview_data(request, bank):
+    user = get_user(request)
+    
+    all_transactions = Transaction.objects.filter(user__exact=user)\
+                            .filter(Q(location__exact=bank)|Q(card_used__name__exact=bank))\
+                            .order_by('date') # reversed, but will be flipped after calculations
+    bank = Bank.objects.filter(user=user).get(name__exact=bank)
+        
+    all_categories = Category.objects.filter(user__exact=user)
+    
+    # Get net and bank values
+    net_and_bank = {
+        'net': 0.0,
+        bank.name: bank.starting_amount,
+    }
+    
+    tx_list = []
+    for tx in all_transactions:
+        cur_tx = vars(tx)
+        # Add all the banks
+        cur_tx[bank.name] = net_and_bank[bank.name]
+        cur_tx['card_used'] = str(tx.card_used)
+        cur_tx['category'] = str(tx.category)
+        cur_tx['date'] = str(tx.date.strftime('%B %d, %Y'))
+        # category == transfer -> check from and to, don't update net (to should be a bank)
+        if cur_tx['category'].lower() == 'transfer':
+            loc = tx.location # to
+            card_used = tx.card_used.name # from
+            
+            try:
+                if (loc == bank.name):
+                    cur_tx[loc] += tx.amount
+                    net_and_bank[loc] = cur_tx[loc]
+                if (card_used == bank.name):
+                    cur_tx[card_used] -= tx.amount
+                    net_and_bank[card_used] = cur_tx[card_used]
+            except BaseException as e:
+                print('loc:', loc)
+                print('cur_tx:', cur_tx)
+                print(type(e), e)
+                traceback.print_exc()
+        # category == income -> check bank to
+        elif cur_tx['category'].lower() == 'income':
+            to = tx.card_used.name
+            try:
+                if (to == bank.name):
+                    cur_tx[to] += tx.amount
+                    net_and_bank[to] = cur_tx[to]
+            except BaseException as e:
+                print(type(e), e)
+                traceback.print_exc()
+                
+        # category == anything else -> check bank from
+        else:
+            card_used = tx.card_used.name
+            try:
+                if (card_used == bank.name):
+                    cur_tx[card_used] -= tx.amount
+                    net_and_bank[card_used] = cur_tx[card_used]
+            except BaseException as e:
+                print(type(e), e)
+                traceback.print_exc()
+        
+        if (cur_tx[bank.name] < 0):
+            cur_tx[bank.name] = '$(' + str(-1*cur_tx[bank.name]) + ')'
+        else:
+            cur_tx[bank.name] = '$' + str(cur_tx[bank.name])
+        
+        if tx.amount < 0:
+            cur_tx['amount'] = '$('+str(-1*cur_tx['amount'])+')'
+        else:
+            cur_tx['amount'] = '$'+str(cur_tx['amount'])
+        
+        tx_list.append(cur_tx)
+        del cur_tx['_state']
+        
+    tx_list.reverse()
+    return JsonResponse({'transactions':tx_list})

@@ -51,37 +51,6 @@
    
     
     <table id='transactions_table' class='transactions'>
-        <tr class='header' id='transaction_header'>
-            <th class='transactions'>
-                #
-            </th>
-            <th class='transactions'>
-                Date
-            </th>
-            <th class='transactions'>
-                Amount
-            </th>
-            <th class='transactions'>
-                Category
-            </th>
-            <th class='transactions'>
-                Location
-            </th>
-            <th class='transactions'>
-                Notes
-            </th>
-            <th class='transactions'>
-                Card/Bank Used
-            </th>
-            <th class='transactions'>
-                Net Change
-            </th>
-            {% for bank in all_banks %}
-            <th class='transactions'>
-                {{bank}}
-            </th>
-            {% endfor %}
-        </tr>
     </table>
 </div>
 
@@ -101,6 +70,16 @@
         "November": 11,
         "December": 12
     }
+    header_names = [
+        '#',
+        'Date',
+        'Amount',
+        'Category',
+        'Location',
+        'Notes',
+        'Card/Bank Used'
+    ]
+    
     category_lookup = {}
     {% for category in all_categories %}
     category_lookup["{{category.category}}"] = {{category.id}};
@@ -159,7 +138,7 @@
      * This function takes the dictionary of lists and builds a table from
      * it.
      **/
-    function buildTable(data){
+    function buildTable(data, bank=null){
         
         function addTdChild(row, text, id=''){
             td = document.createElement('td')
@@ -169,6 +148,32 @@
             row.appendChild(td)
         }
         table = document.getElementById('transactions_table');
+        // Add headers
+        header = table.createTHead();
+        header.classList.add('header');
+        header.id='transaction_header';
+        headerRow = header.insertRow(0);
+        header_names.forEach(function(name){
+            newCell = headerRow.insertCell(-1);
+            newCell.innerHTML = '<strong>'+name+'</strong>';
+            newCell.classList.add('transactions');
+        });
+        if (bank===null){
+            newCell = headerRow.insertCell(-1);
+            newCell.innerHTML = '<strong>Net Change</strong>';
+            newCell.classList.add('transactions');
+            bank_list.forEach(function(bank){
+                newCell = headerRow.insertCell(-1);
+                newCell.innerHTML = '<strong>'+bank+'</strong>';
+                newCell.classList.add('transactions');
+                
+            });
+        }
+        else{
+            newCell = headerRow.insertCell(-1);
+            newCell.innerHTML = '<strong>'+bank+'</strong>';
+            newCell.classList.add('transactions');
+        }
         for(i = 0; i < data.length; i++){
             // Create new row with onclick and onhover attributes
             tr = document.createElement('tr');
@@ -192,10 +197,15 @@
             addTdChild(tr, notes, 'notes');
             card = data[i]['card_used'];
             addTdChild(tr, card, 'card_used');
-            net = data[i]['net']
-            addTdChild(tr, net);
-            for (bank_idx = 0; bank_idx < bank_list.length; bank_idx++){
-                addTdChild(tr, data[i][bank_list[bank_idx]])
+            if (bank === null){
+                net = data[i]['net']
+                addTdChild(tr, net);
+                for (bank_idx = 0; bank_idx < bank_list.length; bank_idx++){
+                    addTdChild(tr, data[i][bank_list[bank_idx]])
+                }
+            }
+            else {
+                addTdChild(tr, data[i][bank])
             }
             // append row to table
             table.appendChild(tr)
@@ -235,20 +245,23 @@ function openTab(evt, tabName) {
     evt.currentTarget.className += " active";
     
     table = document.getElementById('transactions_table');
-    while(table.children[1]) {
-        table.removeChild(table.children[1])
+    while(table.children[0]) {
+        table.removeChild(table.children[0])
     }
     
     if (tabName == 'all')
         var endpoint = '/budget/get_overview_data';
     else
-        var endpoint = '/budget/get_overview_data/'+tabName;
+        var endpoint = '/budget/get_individual_overview_data/'+tabName;
     
     $.ajax({
         method: "GET",
         url: endpoint,
         success: function(data){
-            buildTable(data['transactions']);
+            if (tabName === 'all')
+                buildTable(data['transactions']);
+            else
+                buildTable(data['transactions'], tabName);
             table_backup = document.getElementById('transactions_table').cloneNode(true);
         },
         error: function(error_data){
