@@ -77,10 +77,10 @@ def config_page(request):
     context = {}
     user = get_user(request)
     # Get all configurable data
-    if request.method == 'POST':
-        # Categories
+    # Categories
+    if request.method == 'POST' and request.POST.get('submit_categories','') != '':
         # Add new categories (if blank or disabled, ignore)
-        new_categories = {nc:request.POST.get(nc, '')
+        new_categories = {  nc:request.POST.get(nc, '')
                             for nc in request.POST
                             if nc.startswith('new__')}
                             
@@ -121,14 +121,66 @@ def config_page(request):
                     cat = Category.objects.get(id=int(cat_id))
                     cat.enabled = False
                     cat.save()
-                
-        # Banks
+    # Banks
+    if request.method == 'POST' and request.POST.get('submit_banks','') != '':
+        new_banks = {  nb:request.POST.get(nb, '')
+                            for nb in request.POST
+                            if (nb.startswith('new__') and nb.endswith('__name'))}
+                            
+        existing_banks = {eb:request.POST.get(eb, '')
+                            for eb in request.POST
+                            if eb.startswith('existing__') and eb.endswith('__bank')}
+        # Add new banks
+        print('New Banks:', new_banks)
+        for nb in new_banks:
+            nb_name = request.POST.get(nb,'')
+            nb_starting_amount = request.POST.get('new__'+nb_name+'__starting_amount', '')
+            if (nb_starting_amount == ''):
+                nb_starting_amount = 0.00;
+            else:
+                nb_starting_amount = float(re.sub(r'\$?','',nb_starting_amount))
+            nb_display = request.POST.get('new__'+nb_name+'__display', '') != '' # True = disp == 'on' != ''
+            print('name: ', nb_name)
+            print('sa: ', nb_starting_amount)
+            print('display: ', nb_display)
+            if(nb_name != '' and len(Bank.objects.filter(user=user).filter(name__iexact=nb_name))==0):
+                new_bank = Bank(name=nb_name, starting_amount=nb_starting_amount, display=nb_display, user=user)
+                new_bank.save()
+                print('New bank,',new_bank,'Saved!')
         
-        # Budgets
+        # Updating existing banks
+        for eb in existing_banks:
+            eb_id = re.split('existing__(\d+)__bank', eb)[1]
+            eb_name = request.POST.get('existing__'+eb_id+'__bank','')
+            eb_starting_amount = request.POST.get('existing__'+eb_id+'__starting_amount','')
+            if (eb_starting_amount == ''):
+                eb_starting_amount = 0.00;
+            else:
+                eb_starting_amount = float(re.sub(r'\$','',eb_starting_amount))
+            eb_display = request.POST.get('existing__'+eb_id+'__display','') != ''
+            if(eb_name == '' and not eb_display):
+                bank = Bank.objects.get(id=eb_id)
+                if (    len(Transaction.objects.filter(card_used__exact=bank)) == 0\
+                    and len(Transaction.objects.filter(location__iexact=bank.name)) == 0):
+                    bank.delete()
+            else:
+                bank = Bank.objects.get(id=eb_id)
+                if (eb_name != '' and eb_name != bank.name):
+                    bank.name = eb_name
+                if (eb_starting_amount != bank.starting_amount):
+                    bank.starting_amount = eb_starting_amount
+                bank.display = eb_display
+                bank.save()
+                
+                
+        
+    # Budgets
     
     all_categories = Category.objects.filter(user=user)
+    all_banks = Bank.objects.filter(user=user)
     context = {
         'all_categories': all_categories,
+        'all_banks': all_banks,
     }
     return render(request, 'budget/config.html', context)
 

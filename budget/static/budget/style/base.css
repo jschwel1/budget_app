@@ -104,13 +104,14 @@ tr.transactions:hover{
 }
 
 
-input[type=text].category_input{
+input[type=text].config_input, input[type=number].config_input{
     border: 1px solid black;
     /*border-radius: 10px;*/
     background: none;
+    background-color:#0000;
     padding-left: 10px;
 }
-input[type=text].category_input:focus{
+input[type=text].config_input:focus, input[type=number].config_input:focus{
     border-bottom: 1px solid #AAAAAA;
 }
 
