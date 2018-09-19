@@ -10,7 +10,7 @@ class Bank(models.Model):
         verbose_name_plural = "Banks"
     starting_amount = models.DecimalField(max_digits=15, decimal_places=2)
     name = models.CharField(max_length=64)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, default=User.objects.all()[0].id)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     display = models.BooleanField(default=True)
 
     def __str__(self):
@@ -20,7 +20,7 @@ class Category(models.Model):
     class Meta:
         verbose_name_plural = "Categories"
     category = models.CharField(max_length=65)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, default=User.objects.all()[0].id)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     enabled = models.BooleanField(default=True)
     def __str__(self):
         return self.category;
@@ -65,7 +65,7 @@ class Budget(models.Model):
 
     start = models.DateField(default=timezone.now)
     end = models.DateField(default=timezone.now)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, default=User.objects.all()[0].id)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.start + '->' + self.end;
