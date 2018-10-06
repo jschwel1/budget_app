@@ -4,7 +4,7 @@
 
 {% block body %}
 <h5> Add new entry:</h5>
-<div class='row' >
+<div class='row'  style="width:100%">
     <div class='col-md-5 offset-md-1'>
         <form action="{% url 'budget:overview' %}" method='POST' id='transaction_form'>
             {% csrf_token %}
@@ -15,7 +15,7 @@
             <input type='submit' name='submit_new' value='Submit'>
             <input type='submit' name='update' value='Update'>
             <input type='submit' name='delete' value='Delete'>
-            
+
             <datalist id='Locations'>
                 {% for location in locations %}
                 <option value="{{location}}">
@@ -24,13 +24,32 @@
         </form>
     </div>
     <div class='col-md-5 offset-md-1'>
-        <form action="{% url 'budget:overview' %}" method="POST">
+        {% if bulk_upload %}
+        {% if bulk_upload_error|length > 0%}
+        <div class="alert alert-danger" role="alert">
+            <p> {{bulk_upload_error|length }} Error(s)</p>
+            {% for error in bulk_upload_error %}
+            {{error}} <br>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-success" role="alert">
+            <p> Successfully uploaded transactions.</p>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <form action="{% url 'budget:overview' %}" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             <div class='row'>
-                {{file_form.as_table}}
+                <input type="file" name="bulk_tx_file" required>
             </div>
             <div class='row'>
                 <input type='submit' name='upload_bulk' value='Upload From File'>
+            </div>
+            <div class="row">
+                {% load static %}
+                <a href="{% static 'budget/files/template.csv' %}" download>Bulk Upload Template</a>
             </div>
         </form>
     </div>
