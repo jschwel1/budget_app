@@ -159,6 +159,7 @@ def config_page(request):
             else:
                 nb_starting_amount = float(re.sub(r'\$?','',nb_starting_amount))
             nb_display = request.POST.get('new__'+nb_name+'__display', '') != '' # True = disp == 'on' != ''
+            nb_name = re.sub(' ', '', nb_name) # Remove any spaces, since they cause issues with getting overview data
             print('name: ', nb_name)
             print('sa: ', nb_starting_amount)
             print('display: ', nb_display)
@@ -184,7 +185,11 @@ def config_page(request):
                     bank.delete()
             else:
                 bank = Bank.objects.get(id=eb_id)
-                if (eb_name != '' and eb_name != bank.name):
+                if (eb_name != '' and eb_name != bank.name and len(Bank.objects.filter(user=user).filter(name__exact=eb_name)) == 0):
+                    for tx in Transaction.objects.filter(user=user):
+                        if (tx.location == bank.name):
+                            tx.location = eb_name
+                            tx.save()
                     bank.name = eb_name
                 if (eb_starting_amount != bank.starting_amount):
                     bank.starting_amount = eb_starting_amount
@@ -404,7 +409,7 @@ def get_overview_data(request):
             except BaseException as e:
                 print(type(e), e)
                 traceback.print_exc()
-        
+
         for bank in all_banks:
             if (cur_tx[bank.name] < 0):
                 cur_tx[bank.name] = '$(' + str(-1*cur_tx[bank.name]) + ')'
