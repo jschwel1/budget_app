@@ -4,7 +4,7 @@
 
 {% block body %}
 <h5> Add new entry:</h5>
-<div class='row' >
+<div class='row'  style="width:100%">
     <div class='col-md-5 offset-md-1'>
         <form action="{% url 'budget:overview' %}" method='POST' id='transaction_form'>
             {% csrf_token %}
@@ -12,10 +12,18 @@
             <table>
                 {{tx_form.as_table}}
             </table>
-            <input type='submit' name='submit_new' value='Submit'>
-            <input type='submit' name='update' value='Update'>
-            <input type='submit' name='delete' value='Delete'>
-            
+            <div class='row'>
+                <div class='col-sm-4'>
+                    <input type='submit' class='btn btn-primary' style='width:100%' name='submit_new' value='Submit'>
+                </div>
+                <div class='col-sm-4'>
+                    <input type='submit' name='update' class='btn btn-warning' style='width:100%' value='Update'>
+                </div>
+                <div class='col-sm-4'>
+                    <input type='submit' name='delete' class='btn btn-danger' style='width:100%' value='Delete'>
+                </div>
+            </div>
+
             <datalist id='Locations'>
                 {% for location in locations %}
                 <option value="{{location}}">
@@ -24,15 +32,39 @@
         </form>
     </div>
     <div class='col-md-5 offset-md-1'>
-        <form action="{% url 'budget:overview' %}" method="POST">
+        {% if bulk_upload %}
+        {% if bulk_upload_error|length > 0%}
+        <div class="alert alert-danger" role="alert">
+            <p> {{bulk_upload_error|length }} Error(s)</p>
+            {% for error in bulk_upload_error %}
+            {{error}} <br>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-success" role="alert">
+            <p> Successfully uploaded transactions.</p>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <form action="{% url 'budget:overview' %}" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             <div class='row'>
-                {{file_form.as_table}}
+                <input type="file" name="bulk_tx_file" required>
             </div>
             <div class='row'>
                 <input type='submit' name='upload_bulk' value='Upload From File'>
             </div>
         </form>
+        <hr>
+        <div class="row">
+            {% load static %}
+            <a href="{% static 'budget/files/template.csv' %}" download><button class='btn btn-info' >Bulk Upload Template</button></a>
+        </div>
+        <hr>
+        <div class="row">
+            <a href="{% url 'budget:export_transactions_to_csv' %}"><button  class='btn btn-dark'>Download all transactions</button></a>
+        </div>
     </div>
 </div>
 

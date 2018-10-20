@@ -23,9 +23,12 @@ class TransactionForm(forms.ModelForm):
         if user != None:
             for category in Category.objects.filter(user__exact=user):
                 categories.append((str(category.id), str(category)))
+            banks = [(str(bank.id),str(bank.name)) for bank in Bank.objects.filter(user=user)]
         else:
             for category in Category.objects.all():
                 categories.append((str(category.id), str(category)))
+            banks = []
+
 
         self.fields['category'].widget.choices=categories
         self.fields['category'].widget.attrs={'id':'form_category'}
@@ -36,6 +39,7 @@ class TransactionForm(forms.ModelForm):
         self.fields['location'].widget.attrs={'autocomplete':'off', 'list':'Locations', 'id': 'form_location'}
         self.fields['amount'].widget.attrs={'id':'form_amount', 'step':'0.01'}
         self.fields['notes'].widget.attrs={'id':'form_notes'}
+        self.fields['card_used'].widget.choices=banks
         self.fields['card_used'].widget.attrs={'id':'form_card_used'}
         
 

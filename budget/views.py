@@ -3,18 +3,26 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout, get_user
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.template import Context, loader
 from .models import Bank, Category, Transaction, Budget, BudgetCategory
 from .forms import TransactionForm, UploadFileForm
-import traceback, json, re
+import traceback, json, re, csv, datetime
+from sys import platform
 
 # Create your views here.
 
-
+'''
+========================== HOME PAGE ==========================
+'''
 def home_page(request):
     context = {}
     return render(request, 'budget/index.html', context)
 
+
+'''
+========================== LOGIN PAGE ==========================  
+'''
 def login_page(request):
     context = {}
     if request.method == 'POST':
@@ -62,16 +70,28 @@ def login_page(request):
         context['login'] = True
     return render(request, 'budget/login.html', context)
 
+
+'''
+========================== LOGOUT PAGE ==========================  
+'''
 @login_required
 def logout_page(request):
     context = {}
     logout(request)
     return render(request, 'budget/logout.html', context)
 
+
+'''
+========================== Base Page PAGE ==========================  
+'''
 @login_required
 def load_base(request):
     return render(request, 'budget/base.html')
 
+
+'''
+========================== CONFIG PAGE ==========================  
+'''
 @login_required
 def config_page(request):
     context = {}
@@ -140,6 +160,7 @@ def config_page(request):
             else:
                 nb_starting_amount = float(re.sub(r'\$?','',nb_starting_amount))
             nb_display = request.POST.get('new__'+nb_name+'__display', '') != '' # True = disp == 'on' != ''
+            nb_name = re.sub(' ', '', nb_name) # Remove any spaces, since they cause issues with getting overview data
             print('name: ', nb_name)
             print('sa: ', nb_starting_amount)
             print('display: ', nb_display)
@@ -165,7 +186,11 @@ def config_page(request):
                     bank.delete()
             else:
                 bank = Bank.objects.get(id=eb_id)
-                if (eb_name != '' and eb_name != bank.name):
+                if (eb_name != '' and eb_name != bank.name and len(Bank.objects.filter(user=user).filter(name__exact=eb_name)) == 0):
+                    for tx in Transaction.objects.filter(user=user):
+                        if (tx.location == bank.name):
+                            tx.location = eb_name
+                            tx.save()
                     bank.name = eb_name
                 if (eb_starting_amount != bank.starting_amount):
                     bank.starting_amount = eb_starting_amount
@@ -184,65 +209,108 @@ def config_page(request):
     }
     return render(request, 'budget/config.html', context)
 
+
+'''
+========================== OVERVIEW PAGE ==========================  
+'''
 @login_required
 def overview_page(request):
     context = {}
     user = get_user(request)
     pk = ''
+    bulk_upload_error = None
+    tx_form = TransactionForm(user=user)
     if request.method == 'POST':
-        tx_form = TransactionForm(user, request.POST)#, user=get_user(request))
-        if tx_form.is_valid:
-            # New Entry
-            if request.POST.get('submit_new','') != '':
-                try:
-                    transaction = tx_form.save(commit=False)
-                    category = Category.objects.filter(user__exact=get_user(request)).get(category__exact=transaction.category)
-                    transaction.category = category
-                    transaction.user=user
-                    transaction.save()
-                except BaseException as e:
-                    print(str(type(e)),': ', e)
-                    traceback.print_exc()
-            elif request.POST.get('update','') != '':
-                pk = request.POST.get('pk','')
-                try:
-                    transaction = tx_form.save(commit=False)
-                    original = Transaction.objects.get(pk=pk)
-                    # confirm the user is correct
-                    if (original.user == get_user(request)):
-                        transaction.user = user
-                        transaction.pk = pk
+        if request.POST.get('upload_bulk', '') != '':
+            bulk_upload_error = []
+            tx_file = request.FILES['bulk_tx_file']
+            if (tx_file.size >= 1000000):  # keep files to < 1MB (just over 400 lines)
+                bulk_upload_error.append('File size is too big, keep it below 1MB')
+            elif (not str(tx_file).endswith('.csv')):
+                bulk_upload_error.append('File must be a .csv (comma separated values)')
+            else:
+                # with open(tx_file) as f:
+                file_contents = ''.join(tx_file.read().decode('utf-8'))
+                rows = re.split(r'\r?\n', file_contents)
+                if (rows[0].startswith('date')):
+                    rows = rows[1:]
+                print(rows)
+                for row in rows:
+                    if (row == ''): continue
+                    data = re.split(' ?, ?', row)
+                    try:
+                        tx_date_l = data[0].split('/')
+                        tx_date = datetime.date(int(tx_date_l[2]), int(tx_date_l[0]), int(tx_date_l[1]))
+                        tx_cat = Category.objects.filter(user=user).get(category__exact=data[4])
+                        tx_card_used = Bank.objects.filter(user=user).get(name__exact=data[5])
+                        _, created = Transaction.objects.get_or_create(
+                            date=tx_date,
+                            category=tx_cat,
+                            card_used=tx_card_used,
+                            user=user,
+                            notes=data[3],
+                            location=data[2],
+                            amount=float(data[1])
+                        )
+                        print(created)
+                    except BaseException as e:
+                        print('Error from: ', row)
+                        print(e)
+                        bulk_upload_error.append(row)
+        else:
+            tx_form = TransactionForm(user, request.POST)#, user=get_user(request))
+            if tx_form.is_valid:
+                # New Entry
+                if request.POST.get('submit_new','') != '':
+                    try:
+                        transaction = tx_form.save(commit=False)
+                        category = Category.objects.filter(user__exact=get_user(request)).get(category__exact=transaction.category)
+                        transaction.category = category
+                        transaction.user=user
                         transaction.save()
-                except BaseException as e:
-                    print(str(type(e)),': ', e)
-                    traceback.print_exc()
-            # delete entry
-            elif request.POST.get('delete','') != '':
-                pk = request.POST.get('pk')
-                try:
-                    # Get list as displayed
-                    tx_list = list(Transaction.objects.filter(user__exact=user).order_by('-date'))
-                    tx_user = Transaction.objects.get(pk=pk).user
-                    if (tx_user == user):
-                        # Get the index of the element in the list
-                        idx = tx_list.index(Transaction.objects.get(pk=pk))
-                        Transaction.objects.get(pk=pk).delete()
-                        del tx_list[idx]
+                    except BaseException as e:
+                        print(str(type(e)),': ', e)
+                        traceback.print_exc()
+                elif request.POST.get('update','') != '':
+                    pk = request.POST.get('pk','')
+                    try:
+                        transaction = tx_form.save(commit=False)
+                        original = Transaction.objects.get(pk=pk)
+                        # confirm the user is correct
+                        if (original.user == get_user(request)):
+                            transaction.user = user
+                            transaction.pk = pk
+                            transaction.save()
+                    except BaseException as e:
+                        print(str(type(e)),': ', e)
+                        traceback.print_exc()
+                # delete entry
+                elif request.POST.get('delete','') != '':
+                    pk = request.POST.get('pk')
+                    try:
+                        # Get list as displayed
+                        tx_list = list(Transaction.objects.filter(user__exact=user).order_by('-date'))
+                        tx_user = Transaction.objects.get(pk=pk).user
+                        if (tx_user == user):
+                            # Get the index of the element in the list
+                            idx = tx_list.index(Transaction.objects.get(pk=pk))
+                            Transaction.objects.get(pk=pk).delete()
+                            del tx_list[idx]
 
-                        if (idx >= len(tx_list)):
-                            tx_form = TransactionForm(user=user, instance=tx_list[-1])
-                            pk = tx_list[-1].id
-                        else:
-                            tx_form = TransactionForm(user=user, instance=tx_list[idx])
-                            pk = tx_list[idx].id
-                    
-                except BaseException as e:
-                    print(str(type(e)),': ', e)
-                    traceback.print_exc()
-                    pk = ''
-                    tx_form = TransactionForm(user=user)
-            elif request.POST.get('upload_bulk', '') != '':
-               pass
+                            if (idx >= len(tx_list)):
+                                tx_form = TransactionForm(user=user, instance=tx_list[-1])
+                                pk = tx_list[-1].id
+                            else:
+                                tx_form = TransactionForm(user=user, instance=tx_list[idx])
+                                pk = tx_list[idx].id
+
+                    except BaseException as e:
+                        print(str(type(e)),': ', e)
+                        traceback.print_exc()
+                        pk = ''
+                        tx_form = TransactionForm(user=user)
+
+
     else:
         tx_form = TransactionForm(user=user)
     
@@ -258,17 +326,22 @@ def overview_page(request):
         locations.append(str(bank.name))
     locations = sorted(list(set(locations)))
     all_categories = Category.objects.filter(user__exact=user)
-    
+
     context = {
         'tx_form': tx_form,
         'all_banks': all_banks,
         'locations': locations,
         'all_categories': all_categories,
         'file_form': UploadFileForm(),
+        'bulk_upload_error': (bulk_upload_error if bulk_upload_error is not None else ''),
+        'bulk_upload': (bulk_upload_error is not None),
     }
     return render(request, 'budget/overview.html', context)
 
 
+'''
+========================== GET OVERVIEW DATA ==========================  
+'''
 @login_required
 def get_overview_data(request):
     user = get_user(request)
@@ -293,7 +366,10 @@ def get_overview_data(request):
             cur_tx[bank.name] = net_and_bank[bank.name]
         cur_tx['card_used'] = str(tx.card_used)
         cur_tx['category'] = str(tx.category)
-        cur_tx['date'] = str(tx.date.strftime('%B %d, %Y'))
+        if (platform == 'win32'):
+            cur_tx['date'] = str(tx.date.strftime('%B %#d, %Y'))
+        else:
+            cur_tx['date'] = str(tx.date.strftime('%B %-d, %Y'))
         # category == transfer -> check from and to, don't update net (to should be a bank)
         if cur_tx['category'].lower() == 'transfer':
             loc = tx.location # to
@@ -334,7 +410,7 @@ def get_overview_data(request):
             except BaseException as e:
                 print(type(e), e)
                 traceback.print_exc()
-        
+
         for bank in all_banks:
             if (cur_tx[bank.name] < 0):
                 cur_tx[bank.name] = '$(' + str(-1*cur_tx[bank.name]) + ')'
@@ -358,10 +434,13 @@ def get_overview_data(request):
     
 
 
+'''
+========================== GET INDIVIDUAL OVERVIEW DATA ==========================  
+'''
 @login_required
 def get_individual_overview_data(request, bank):
     user = get_user(request)
-    
+    print('Finding data for ', bank)
     all_transactions = Transaction.objects.filter(user__exact=user)\
                             .filter(Q(location__exact=bank)|Q(card_used__name__exact=bank))\
                             .order_by('date') # reversed, but will be flipped after calculations
@@ -382,7 +461,10 @@ def get_individual_overview_data(request, bank):
         cur_tx[bank.name] = net_and_bank[bank.name]
         cur_tx['card_used'] = str(tx.card_used)
         cur_tx['category'] = str(tx.category)
-        cur_tx['date'] = str(tx.date.strftime('%B %d, %Y'))
+        if (platform == 'win32'):
+            cur_tx['date'] = str(tx.date.strftime('%B %#d, %Y'))
+        else:
+            cur_tx['date'] = str(tx.date.strftime('%B %-d, %Y'))
         # category == transfer -> check from and to, don't update net (to should be a bank)
         if cur_tx['category'].lower() == 'transfer':
             loc = tx.location # to
@@ -437,3 +519,18 @@ def get_individual_overview_data(request, bank):
         
     tx_list.reverse()
     return JsonResponse({'transactions':tx_list})
+
+def export_tx_as_csv(request):
+    user = get_user(request)
+    transactions = Transaction.objects.filter(user=user).order_by('-date')
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="exported_transactions_for_%s.csv'%user.username
+    writer = csv.writer(response)
+    writer.writerow(['date', 'amount', 'location', 'notes', 'category', 'card used', 'id'])
+    for tx in transactions:
+        writer.writerow([str(tx.date.month)+'/'+str(tx.date.day)+'/'+str(tx.date.year), tx.amount, tx.location, tx.notes, tx.category.category, tx.card_used.name, tx.id])
+        
+    return response
+    
+
