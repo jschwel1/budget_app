@@ -55,16 +55,16 @@
             <div class='row'>
                 <input type='submit' name='upload_bulk' value='Upload From File'>
             </div>
-            <hr>
-            <div class="row">
-                {% load static %}
-                <button href="{% static 'budget/files/template.csv' %}" class='btn btn-info' download>Bulk Upload Template</button>
-            </div>
-            <hr>
-            <div class="row">
-                <button href="{% url 'budget:export_transactions_to_csv' %}" class='btn btn-dark'>Download all transactions</a>
-            </div>
         </form>
+        <hr>
+        <div class="row">
+            {% load static %}
+            <a href="{% static 'budget/files/template.csv' %}" download><button class='btn btn-info' >Bulk Upload Template</button></a>
+        </div>
+        <hr>
+        <div class="row">
+            <a href="{% url 'budget:export_transactions_to_csv' %}"><button  class='btn btn-dark'>Download all transactions</button></a>
+        </div>
     </div>
 </div>
 
