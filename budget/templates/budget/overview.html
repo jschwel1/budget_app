@@ -12,9 +12,17 @@
             <table>
                 {{tx_form.as_table}}
             </table>
-            <input type='submit' name='submit_new' value='Submit'>
-            <input type='submit' name='update' value='Update'>
-            <input type='submit' name='delete' value='Delete'>
+            <div class='row'>
+                <div class='col-sm-4'>
+                    <input type='submit' class='btn btn-primary' style='width:100%' name='submit_new' value='Submit'>
+                </div>
+                <div class='col-sm-4'>
+                    <input type='submit' name='update' class='btn btn-warning' style='width:100%' value='Update'>
+                </div>
+                <div class='col-sm-4'>
+                    <input type='submit' name='delete' class='btn btn-danger' style='width:100%' value='Delete'>
+                </div>
+            </div>
 
             <datalist id='Locations'>
                 {% for location in locations %}
@@ -47,9 +55,14 @@
             <div class='row'>
                 <input type='submit' name='upload_bulk' value='Upload From File'>
             </div>
+            <hr>
             <div class="row">
                 {% load static %}
-                <a href="{% static 'budget/files/template.csv' %}" download>Bulk Upload Template</a>
+                <button href="{% static 'budget/files/template.csv' %}" class='btn btn-info' download>Bulk Upload Template</button>
+            </div>
+            <hr>
+            <div class="row">
+                <button href="{% url 'budget:export_transactions_to_csv' %}" class='btn btn-dark'>Download all transactions</a>
             </div>
         </form>
     </div>

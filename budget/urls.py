@@ -27,5 +27,6 @@ urlpatterns = [
     re_path(r'^logout/$', views.logout_page, name='logout'),
     re_path(r'^get_overview_data/$', views.get_overview_data, name='get_overview_data'),
     re_path(r'^get_individual_overview_data/(?P<bank>[0-9a-zA-Z]+)$', views.get_individual_overview_data, name='get_individual_overview_data'),
+    re_path(r'^export_transactions_to_csv/$', views.export_tx_as_csv, name='export_transactions_to_csv'),
     path(r'base', views.load_base, name='base'),
 ]

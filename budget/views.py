@@ -3,7 +3,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout, get_user
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.template import Context, loader
 from .models import Bank, Category, Transaction, Budget, BudgetCategory
 from .forms import TransactionForm, UploadFileForm
 import traceback, json, re, csv, datetime
@@ -518,3 +519,18 @@ def get_individual_overview_data(request, bank):
         
     tx_list.reverse()
     return JsonResponse({'transactions':tx_list})
+
+def export_tx_as_csv(request):
+    user = get_user(request)
+    transactions = Transaction.objects.filter(user=user).order_by('-date')
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="exported_transactions_for_%s.csv'%user.username
+    writer = csv.writer(response)
+    writer.writerow(['date', 'amount', 'location', 'notes', 'category', 'card used', 'id'])
+    for tx in transactions:
+        writer.writerow([str(tx.date.month)+'/'+str(tx.date.day)+'/'+str(tx.date.year), tx.amount, tx.location, tx.notes, tx.category.category, tx.card_used.name, tx.id])
+        
+    return response
+    
+
