@@ -59,12 +59,29 @@ class Transaction(models.Model):
     def set_value(self, a, v):
         self.__dict__[a] = v
     
+class Fund(models.Model):
+    class Meta:
+        verbose_name_plural = "Funds"
+
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    start = models.DateField(default=timezone.now)
+    end = models.DateField(default=timezone.now)
+    cap = models.DecimalField(default=0,max_digits=15,decimal_places=2)
+    accrual = models.DecimalField(default=0,max_digits=15,decimal_places=2)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    priority = models.IntegerField(default=10) # lower number = higher priority
+
+    def __str__(self):
+        return self.name + ': ' + self.start + '->' + self.end + ', ' + self.accrual + '(%s)'%self.accrual;
+
 class Budget(models.Model):
     class Meta:
         verbose_name_plural = "Budgets"
 
     start = models.DateField(default=timezone.now)
     end = models.DateField(default=timezone.now)
+    cap = models.DecimalField(max_digits=15,decimal_places=2, default=0.00)
+    cumulate = models.BooleanField(default=True) # Grow
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):

@@ -534,3 +534,8 @@ def export_tx_as_csv(request):
     return response
     
 
+def monthly_overview(request):
+    pass
+
+def budget_status(request):
+    pass
