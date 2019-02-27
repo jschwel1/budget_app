@@ -5,10 +5,11 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponse
 from django.template import Context, loader
-from .models import Bank, Category, Transaction, Budget, BudgetCategory
+from .models import Bank, Category, Transaction, Budget, BudgetCategory, TransactionBankAmount
 from .forms import TransactionForm, UploadFileForm
 import traceback, json, re, csv, datetime
 from sys import platform
+from .extra_functions import *
 
 # Create your views here.
 
@@ -51,6 +52,8 @@ def login_page(request):
                 # Create Income and Transfer categories
                 Category.objects.create(category='Transfer',user=user)
                 Category.objects.create(category='Income',user=user)
+                # Create Net bank
+                Bank.objects.create(starting_amount=0.00, name='Net', user=user, display=False)
                 return redirect('budget:home')
             except:
                 error_msg='username already taken'
@@ -214,12 +217,13 @@ def config_page(request):
 ========================== OVERVIEW PAGE ==========================  
 '''
 @login_required
-def overview_page(request):
+def overview_page(request, page=1):
     context = {}
     user = get_user(request)
     pk = ''
     bulk_upload_error = None
     tx_form = TransactionForm(user=user)
+    num_pages = 1
     if request.method == 'POST':
         if request.POST.get('upload_bulk', '') != '':
             bulk_upload_error = []
@@ -316,6 +320,7 @@ def overview_page(request):
     
     
     all_transactions = Transaction.objects.filter(user__exact=user).order_by('-date')
+    
     # Update transaction amounts to strings with parens for negatives
     locations = []
     for tx in all_transactions:

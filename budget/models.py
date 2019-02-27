@@ -91,10 +91,20 @@ class BudgetCategory(models.Model):
     class Meta:
         verbose_name_plural = "Budget Categories"
         
-    budget = models.ForeignKey(Budget, on_delete=models.CASCADE);
-    category = models.ForeignKey(Category, on_delete=models.CASCADE);
+    budget = models.ForeignKey(Budget, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
     amount = models.IntegerField()
 
     def __str__(self):
         return self.budget + ' | ' + self.category + ' -> ' + self.amount
+
+class TransactionBankAmount(models.Model):
+    class Meta:
+        verbose_name_plural = "Transaction Bank Amounts"
+    transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE)
+    bank = models.ForeignKey(Bank, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return str(self.transaction) + ' [' + self.bank.name + '] ' + str(self.amount)
 

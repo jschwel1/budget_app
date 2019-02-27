@@ -1,5 +1,5 @@
 from django.contrib import admin
-from budget.models import Bank, Category, Transaction, Budget, BudgetCategory
+from budget.models import Bank, Category, Transaction, Budget, BudgetCategory, TransactionBankAmount
 
 # Register your models here.
 
@@ -22,3 +22,7 @@ admin.site.register(Budget, BudgetAdmin)
 class BudgetCategoryAdmin(admin.ModelAdmin):
     list_display=['id', 'budget', 'category', 'amount']
 admin.site.register(BudgetCategory, BudgetCategoryAdmin)
+
+class TransactionBankAmountAdmin(admin.ModelAdmin):
+    list_display=['id', 'transaction', 'bank', 'amount']
+admin.site.register(TransactionBankAmount, TransactionBankAmountAdmin)
