@@ -7,9 +7,11 @@ from django.http import JsonResponse, HttpResponse
 from django.template import Context, loader
 from .models import Bank, Category, Transaction, Budget, BudgetCategory, TransactionBankAmount
 from .forms import TransactionForm, UploadFileForm
+from .extra_functions import *
 import traceback, json, re, csv, datetime
 from sys import platform
 from .extra_functions import *
+import datetime
 
 # Create your views here.
 
@@ -234,6 +236,7 @@ def overview_page(request, page=1):
                 bulk_upload_error.append('File must be a .csv (comma separated values)')
             else:
                 # with open(tx_file) as f:
+                mindate = datetime.date(year=datetime.MAXYEAR, month=12, day=31)
                 file_contents = ''.join(tx_file.read().decode('utf-8'))
                 rows = re.split(r'\r?\n', file_contents)
                 if (rows[0].startswith('date')):
@@ -256,11 +259,15 @@ def overview_page(request, page=1):
                             location=data[2],
                             amount=float(data[1])
                         )
+                        if tx_date < mindate:
+                            mindate = tx_date
                         print(created)
                     except BaseException as e:
                         print('Error from: ', row)
-                        print(e)
+                        print(type(e), e)
                         bulk_upload_error.append(row)
+                print('recalculating all bank-transaction amounts since', mindate)
+                calc_all_since(mindate, user)
         else:
             tx_form = TransactionForm(user, request.POST)#, user=get_user(request))
             if tx_form.is_valid:
@@ -272,6 +279,7 @@ def overview_page(request, page=1):
                         transaction.category = category
                         transaction.user=user
                         transaction.save()
+                        calc_all_since(transaction.date, user)
                     except BaseException as e:
                         print(str(type(e)),': ', e)
                         traceback.print_exc()
@@ -285,6 +293,7 @@ def overview_page(request, page=1):
                             transaction.user = user
                             transaction.pk = pk
                             transaction.save()
+                            calc_all_since(transaction.date, user)
                     except BaseException as e:
                         print(str(type(e)),': ', e)
                         traceback.print_exc()
@@ -298,7 +307,9 @@ def overview_page(request, page=1):
                         if (tx_user == user):
                             # Get the index of the element in the list
                             idx = tx_list.index(Transaction.objects.get(pk=pk))
+                            tx_date = Transaction.objects.get(pk=pk).date
                             Transaction.objects.get(pk=pk).delete()
+                            calc_all_since(tx_date, user)
                             del tx_list[idx]
 
                             if (idx >= len(tx_list)):
@@ -307,6 +318,7 @@ def overview_page(request, page=1):
                             else:
                                 tx_form = TransactionForm(user=user, instance=tx_list[idx])
                                 pk = tx_list[idx].id
+
 
                     except BaseException as e:
                         print(str(type(e)),': ', e)
