@@ -366,7 +366,7 @@ def overview_page(request, page):
         'file_form': UploadFileForm(),
         'bulk_upload_error': (bulk_upload_error if bulk_upload_error is not None else ''),
         'bulk_upload': (bulk_upload_error is not None),
-        'start_idx': start_idx,
+        'total_txs': len(all_transactions)-start_idx,
         'page': page,
     }
     return render(request, 'budget/overview.html', context)

@@ -217,7 +217,7 @@
             tr.setAttribute('class', 'transactions')
             tr.setAttribute('name', data[i].id)
             // append each data item
-            num = data.length - i + {{start_idx}};
+            num = {{total_txs}}-i;
             addTdChild(tr, num);
             date = data[i]['date'];
             addTdChild(tr, date, 'date');
