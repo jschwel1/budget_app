@@ -12,6 +12,8 @@ import traceback, json, re, csv, datetime
 from sys import platform
 from .extra_functions import *
 import datetime
+import time
+import math
 
 # Create your views here.
 
@@ -219,11 +221,13 @@ def config_page(request):
 ========================== OVERVIEW PAGE ==========================  
 '''
 @login_required
-def overview_page(request, page=1):
+def overview_page(request, page):
+    print('page: ', page)
     context = {}
     user = get_user(request)
     pk = ''
     bulk_upload_error = None
+    tx_per_page = 100
     tx_form = TransactionForm(user=user)
     num_pages = 1
     if request.method == 'POST':
@@ -332,6 +336,16 @@ def overview_page(request, page=1):
     
     
     all_transactions = Transaction.objects.filter(user__exact=user).order_by('-date')
+    if (page == "" or page is None):
+        page = 1
+    else:
+        page = int(page)
+        if (page < 0):
+            page = 1
+    max_page = math.ceil(len(all_transactions)/tx_per_page)
+    page = min(page, max_page)
+    start_idx = max((page-1)*tx_per_page, 0)
+    print('Starting index at', start_idx)
     
     # Update transaction amounts to strings with parens for negatives
     locations = []
@@ -352,6 +366,8 @@ def overview_page(request, page=1):
         'file_form': UploadFileForm(),
         'bulk_upload_error': (bulk_upload_error if bulk_upload_error is not None else ''),
         'bulk_upload': (bulk_upload_error is not None),
+        'start_idx': start_idx,
+        'page': page,
     }
     return render(request, 'budget/overview.html', context)
 
@@ -360,83 +376,49 @@ def overview_page(request, page=1):
 ========================== GET OVERVIEW DATA ==========================  
 '''
 @login_required
-def get_overview_data(request):
+def get_overview_data(request, page=1):
     user = get_user(request)
+    tx_per_page = 100
+    print('page: ', page)
     
-    all_transactions = Transaction.objects.filter(user__exact=user).order_by('date') # reversed, but will be flipped after calculations
-    all_banks = Bank.objects.filter(user=user)
+    all_transactions = Transaction.objects.filter(user__exact=user).order_by('-date') # reversed, but will be flipped after calculations
+    if (page == "" or page is None):
+        page = 1
+    else:
+        page = int(page)
+        if (page < 0):
+            page = 1
+    max_page = math.ceil(len(all_transactions)/tx_per_page)
+    page = min(page, max_page)
+    start_idx = max((page-1)*tx_per_page, 0)
+    end_idx = min(start_idx+(tx_per_page), len(all_transactions))
+    print('Getting txs from %d to %d'%(start_idx, end_idx))
+    all_transactions = all_transactions[start_idx:end_idx]
+    all_banks = Bank.objects.filter(user=user).filter(display=True)
     
     all_categories = Category.objects.filter(user__exact=user)
-    
-    # Get net and bank values
-    net_and_bank = {'net': 0.0}
-    bank_lookup = {}
-    for bank in all_banks:
-        net_and_bank[bank.name] = bank.starting_amount
-    
+    if (platform == 'win32'):
+        time_format='%B %#d, %Y'
+    else:
+        time_format='%B %-d, %Y'
+
+    times = []
     tx_list = []
     for tx in all_transactions:
+        start = time.time()
+        tx_tbas = tx.transactionbankamount_set.get_queryset()
         cur_tx = vars(tx)
         # Add all the banks
-        cur_tx['net'] = net_and_bank['net']
         for bank in all_banks:
-            cur_tx[bank.name] = net_and_bank[bank.name]
+            cur_tx[bank.name] = tx_tbas.get(bank__name=bank.name).amount + bank.starting_amount
         cur_tx['card_used'] = str(tx.card_used)
         cur_tx['category'] = str(tx.category)
-        if (platform == 'win32'):
-            cur_tx['date'] = str(tx.date.strftime('%B %#d, %Y'))
-        else:
-            cur_tx['date'] = str(tx.date.strftime('%B %-d, %Y'))
-        # category == transfer -> check from and to, don't update net (to should be a bank)
-        if cur_tx['category'].lower() == 'transfer':
-            loc = tx.location # to
-            card_used = tx.card_used.name # from
-            
-            try:
-                cur_tx[loc] += tx.amount
-                net_and_bank[loc] = cur_tx[loc]
-                cur_tx[card_used] -= tx.amount
-                net_and_bank[card_used] = cur_tx[card_used]
-            except BaseException as e:
-                print('loc:', loc)
-                print('cur_tx:', cur_tx)
-                print(type(e), e)
-                traceback.print_exc()
-        # category == income -> check bank to
-        elif cur_tx['category'].lower() == 'income':
-            to = tx.card_used.name
-            try:
-                cur_tx[to] += tx.amount
-                net_and_bank[to] = cur_tx[to]
-                cur_tx['net'] += float(tx.amount)
-                cur_tx['net'] = round(cur_tx['net'],2)
-                net_and_bank['net'] = cur_tx['net']
-            except BaseException as e:
-                print(type(e), e)
-                traceback.print_exc()
-                
-        # category == anything else -> check bank from
-        else:
-            card_used = tx.card_used.name
-            try:
-                cur_tx[card_used] -= tx.amount
-                net_and_bank[card_used] = cur_tx[card_used]
-                cur_tx['net'] -= float(tx.amount)
-                cur_tx['net'] = round(cur_tx['net'],2)
-                net_and_bank['net'] = cur_tx['net']
-            except BaseException as e:
-                print(type(e), e)
-                traceback.print_exc()
-
+        cur_tx['date'] = str(tx.date.strftime(time_format))
         for bank in all_banks:
             if (cur_tx[bank.name] < 0):
                 cur_tx[bank.name] = '$(' + str(-1*cur_tx[bank.name]) + ')'
             else:
                 cur_tx[bank.name] = '$' + str(cur_tx[bank.name])
-        if (cur_tx['net'] < 0):
-            cur_tx['net'] = '$(' + str(-1*cur_tx['net']) + ')'
-        else:
-            cur_tx['net'] = '$' + str(cur_tx['net'])
         
         if tx.amount < 0:
             cur_tx['amount'] = '$('+str(-1*cur_tx['amount'])+')'
@@ -445,8 +427,10 @@ def get_overview_data(request):
         
         tx_list.append(cur_tx)
         del cur_tx['_state']
+        times.append(time.time()-start)
         
-    tx_list.reverse()
+    print('each transaction took an average of %f seconds with a max of %f and a min of %f'%(sum(times)/len(times),max(times),min(times)))
+    print('total time ~%f'%sum(times))
     return JsonResponse({'transactions':tx_list})
     
 
@@ -537,6 +521,7 @@ def get_individual_overview_data(request, bank):
     tx_list.reverse()
     return JsonResponse({'transactions':tx_list})
 
+@login_required
 def export_tx_as_csv(request):
     user = get_user(request)
     transactions = Transaction.objects.filter(user=user).order_by('-date')
@@ -549,6 +534,14 @@ def export_tx_as_csv(request):
         writer.writerow([str(tx.date.month)+'/'+str(tx.date.day)+'/'+str(tx.date.year), tx.amount, tx.location, tx.notes, tx.category.category, tx.card_used.name, tx.id])
         
     return response
+    
+@login_required
+def recalculate_all(request):
+    user = get_user(request)
+    date = datetime.date(year=datetime.MINYEAR,month=1,day=1)
+    calc_all_since(date, user)
+
+    return redirect('/budget/overview/')
     
 
 def monthly_overview(request):

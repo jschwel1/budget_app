@@ -65,6 +65,9 @@
         <div class="row">
             <a href="{% url 'budget:export_transactions_to_csv' %}"><button  class='btn btn-dark'>Download all transactions</button></a>
         </div>
+        <div class="row">
+            <a href="{% url 'budget:recalculate_all' %}"><button  class='btn btn-light'>Refresh</button></a>
+        </div>
     </div>
 </div>
 
@@ -119,7 +122,9 @@
     
     bank_list = []
     {% for bank in all_banks %}
-    bank_list.push('{{bank.name}}')
+        {% if bank.display %}
+        bank_list.push('{{bank.name}}')
+        {% endif %}
     {% endfor %}
     bank_lookup = {}
     {% for bank in all_banks %}
@@ -191,9 +196,6 @@
             newCell.classList.add('transactions');
         });
         if (bank===null){
-            newCell = headerRow.insertCell(-1);
-            newCell.innerHTML = '<strong>Net Change</strong>';
-            newCell.classList.add('transactions');
             bank_list.forEach(function(bank){
                 newCell = headerRow.insertCell(-1);
                 newCell.innerHTML = '<strong>'+bank+'</strong>';
@@ -215,7 +217,7 @@
             tr.setAttribute('class', 'transactions')
             tr.setAttribute('name', data[i].id)
             // append each data item
-            num = data.length-i;
+            num = data.length - i + {{start_idx}};
             addTdChild(tr, num);
             date = data[i]['date'];
             addTdChild(tr, date, 'date');
@@ -230,8 +232,6 @@
             card = data[i]['card_used'];
             addTdChild(tr, card, 'card_used');
             if (bank === null){
-                net = data[i]['net']
-                addTdChild(tr, net);
                 for (bank_idx = 0; bank_idx < bank_list.length; bank_idx++){
                     addTdChild(tr, data[i][bank_list[bank_idx]])
                 }
@@ -245,14 +245,14 @@
         
     }
     // Get data from ajax request
-    var endpoint = '/budget/get_overview_data'
+    var endpoint = '/budget/get_overview_data/{{page}}'
     
     $.ajax({
         method: "GET",
         url: endpoint,
         success: function(data){
             buildTable(data['transactions']);
-            table_backup = document.getElementById('transactions_table').cloneNode(true);
+//            table_backup = document.getElementById('transactions_table').cloneNode(true);
         },
         error: function(error_data){
             console.log("Error: ")
@@ -282,7 +282,7 @@ function openTab(evt, tabName) {
     }
     
     if (tabName == 'all')
-        var endpoint = '/budget/get_overview_data';
+        var endpoint = '/budget/get_overview_data/1';
     else
         var endpoint = '/budget/get_individual_overview_data/'+tabName;
     
