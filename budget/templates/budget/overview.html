@@ -76,7 +76,9 @@
 <div class="tab">
     <button class="tablinks active" onclick="openTab(event, 'all')">All</button>
     {% for bank in all_banks %}
+    {% if bank.display %}
     <button class="tablinks" onclick="openTab(event, '{{bank}}')">{{bank}}</button>
+    {% endif %}
     {% endfor %}
 </div>
     
@@ -131,7 +133,6 @@
     bank_lookup["{{bank.name}}"] = {{bank.id}};
     {% endfor %}
     
-    var table_backup;
     
     function moveToForm(event, row){
         // If this row is clicked, add its data to the form
@@ -294,7 +295,7 @@ function openTab(evt, tabName) {
                 buildTable(data['transactions']);
             else
                 buildTable(data['transactions'], tabName);
-            table_backup = document.getElementById('transactions_table').cloneNode(true);
+//            table_backup = document.getElementById('transactions_table').cloneNode(true);
         },
         error: function(error_data){
             console.log("Error: ")
